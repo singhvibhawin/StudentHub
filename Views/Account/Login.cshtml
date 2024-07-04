@@ -1,0 +1,32 @@
+﻿@model User;
+
+<form method="post" class="container justify-content-center align-items-center my-4">
+    <div class="border p-3 mt-5">
+        <div class="row pb-2">
+            <h2 class="text-primary text-center">Login</h2>
+            <hr />
+            <div class="col-12 mb-3">
+                <label asp-for="Email" class="p-0"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-12 mb-3">
+                <label asp-for="Password" class="p-0"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="text-center pb-1 my-2">
+            <button type="submit" class="btn btn-primary text-center px-4">Submit</button>
+        </div>
+        <div class="container text-center mt-3">
+            <span>Don't have a Account?</span> <a asp-controller="Account" asp-action="Register" class="text-decoration-none">Register</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        <partial name="_ValidationScriptsPartial" />
+    }
+}
