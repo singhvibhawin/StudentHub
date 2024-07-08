@@ -7,63 +7,142 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ConnectingDatabase.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.css" />
+    <link href="/css/style.css" rel="stylesheet" />
+    <!----===== Boxicons CSS ===== -->
+    <link href='https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css' rel='stylesheet'>
+
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ConnectingDatabase</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+    <div class="sidebar close">
+        <div class="logo-details">
+            <i class='bx bxl-c-plus-plus'></i>
+            <span class="logo_name">StudentHub</span>
+        </div>
+        <ul class="nav-links">
+            <li>
+                <a class="" asp-controller="Home" asp-action="Index">
+                    <i class='bx bx-home-alt icon'></i>
+                    <span class="link_name">Home</span>
+                </a>
+                <ul class="sub-menu blank">
+                    <li><a class="link_name" href="#">Home</a></li>
+                </ul>
+            </li>
+            @{string username = HttpContextAccessor.HttpContext.Session.GetString("_UserName");}
+            @if (!string.IsNullOrEmpty(username))
+            {
+                <li>
+                    <div class="iocn-link">
+                        <a href="#">
+                            <i class='bx bx-collection'></i>
+                            <span class="link_name">Transactions</span>
+                        </a>
+                        <i class='bx bxs-chevron-down arrow'></i>
+                    </div>
+                    <ul class="sub-menu">
+                        <li><a class="link_name" href="#">Transactions</a></li>
+                        @if (username == "admin")
+                        {
+                            <li>
+                                <a class="" asp-controller="Student" asp-action="Index">
+                                    <span class="text nav-text">Students Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="" asp-controller="Student" asp-action="UserProfile">
+                                    <span class="text nav-text">Admin Profile</span>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li>
+                                <a class="" asp-controller="Student" asp-action="Index">
+                                    <span class="text nav-text">Student Registration Form</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="" asp-controller="Student" asp-action="UserProfile">
+                                    <span class="text nav-text">Student Profile</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                    <li>
+                        <a class="" asp-controller="Account" asp-action="Logout">
+                            <i class='bx bx-log-in icon'></i>
+                            <span class="link_name">Logout</span>
+                        </a>
+                        <ul class="sub-menu blank">
+                            <li>
+                            <a class="link_name" asp-controller="Account" asp-action="Logout">
+                                <span class="link_name">Logout</span>
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Student" asp-action="Index">Student</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Account" asp-action="UserProfile">Profile</a>
+                        </ul>
+                    </li>
+                </li>
+            }else
+            {
+                <li>
+                    <a class="nav-link text-white" asp-controller="Account" asp-action="Login">
+                        <i class='bx bx-log-in icon'></i>
+                        <span class="link_name">Login</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li>
+                            <a class="link_name" asp-controller="Account" asp-action="Login">
+                                <span class="link_name">Login</span>
+                            </a>
                         </li>
                     </ul>
-                </div>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
-                    <ul class="navbar-nav flex-grow-1 justify-content-end">
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Account" asp-action="Logout">Logout</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+                </li>
+                <li>
+                    <a class="nav-link text-white" asp-controller="Account" asp-action="Register">
+                        <i class='bx bx-user-check icon'></i>
+                        <span class="link_name">Register</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li>
+                            <a class="link_name" asp-controller="Account" asp-action="Register">
+                                <span class="link_name">Register</span>
+                            </a>
                         </li>
                     </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+                </li>
+            }
+        </ul>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2024 - ConnectingDatabase - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <section class="home-section">
+        <div class="home-content">
+            <i class='bx bx-menu'></i>
         </div>
-    </footer>
+        <partial name="_Notification" />
+        @RenderBody()
+    </section>
+
+    <script>
+        let arrow = document.querySelectorAll(".arrow");
+        for (var i = 0; i < arrow.length; i++) {
+            arrow[i].addEventListener("click", (e) => {
+                let arrowParent = e.target.parentElement.parentElement;//selecting main parent of arrow
+                arrowParent.classList.toggle("showMenu");
+            });
+        }
+
+        let sidebar = document.querySelector(".sidebar");
+        let sidebarBtn = document.querySelector(".bx-menu");
+        console.log(sidebarBtn);
+        sidebarBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("close");
+        });
+    </script>
+    
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

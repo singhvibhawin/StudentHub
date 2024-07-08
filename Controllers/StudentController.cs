@@ -11,6 +11,8 @@ namespace ConnectingDatabase.Controllers
     public class StudentController : Controller
     {
         private readonly ApplicationDbContext _db;
+        const string SessionUserName = "_UserName";
+        const string SessionUserId = "_UserId";
         public StudentController(ApplicationDbContext db)
         {
             _db = db;
@@ -18,15 +20,37 @@ namespace ConnectingDatabase.Controllers
 
         public IActionResult Index()
         {
-            List<Student> studentsObj = _db.Students.ToList();
-            ViewBag.Message = studentsObj;
-            return View();
+            string username = HttpContext.Session.GetString("_UserName");
+
+            if (username == "admin")
+            {
+                List<Student> studentsObj = _db.Students.ToList();
+                ViewBag.Username = username;
+                return View(studentsObj);
+            }
+
+            return NotFound();
         }
 
         // Pagination
         [HttpGet]
         public async Task<ActionResult> Index(int page = 1)
         {
+            string username = HttpContext.Session.GetString("_UserName");
+            if (username == "user")
+            {
+                int? userId = HttpContext.Session.GetInt32("_UserId");
+                var existingStudent = _db.Students.FirstOrDefault(uid => uid.UserId == userId);
+
+                if (existingStudent != null)
+                {
+                    TempData["error"] = "A student profile associated with this user already exists.";
+                    Console.WriteLine("A student profile associated with this user already exists.");
+                    return RedirectToAction("UserProfile");
+                }
+            }
+            ViewBag.Username = username;
+
             if (page < 0 || page == 0)
             {
                 page = 1;
@@ -34,7 +58,7 @@ namespace ConnectingDatabase.Controllers
             int pageSize = 5;
             int totalRecord = await _db.Students.CountAsync();
             int totalPages = (int)Math.Ceiling(totalRecord / (double)pageSize);
-            IEnumerable<Student> studentsObj = await _db.Students
+            var studentsObj = await _db.Students
                                                  .OrderBy(s => s.StudentId) // Ensure ordering for consistent paging
                                                  .Skip((page - 1) * pageSize)
                                                  .Take(pageSize)
@@ -69,13 +93,28 @@ namespace ConnectingDatabase.Controllers
                 if (existingStudent != null)
                 {
                     // Email already exists
-                    ViewBag.ErrorMessage = "Email already exists!";
+                    TempData["error"] = "Email already exists!";
                     return View();
                 }
 
+                string username = HttpContext.Session.GetString("_UserName");
+                int? userId = HttpContext.Session.GetInt32("_UserId");
+
+                if (userId == null)
+                {
+                    // Handle the case where the userId is not found in the session
+                    TempData["error"] = "User session has expired. Please log in again.";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Set the UserId property of the student
+                student.UserId = userId.Value;
+
                 _db.Students.Add(student).ToString();
                 _db.SaveChanges();
-                return RedirectToAction("Index");
+
+                TempData["success"] = "Student registered successfully!";
+                return RedirectToAction("UserProfile");
             }
 
             //If Model State is not valid 
@@ -85,7 +124,32 @@ namespace ConnectingDatabase.Controllers
                 student = new Student()
             };
 
-            return View("Index", viewModel);
+            return View("Index");
+        }
+
+        public IActionResult UserProfile()
+        {
+            string username = HttpContext.Session.GetString("_UserName");
+            int? userId = HttpContext.Session.GetInt32("_UserId");
+    
+            if (userId == null)
+            {
+                TempData["error"] = "User session has expired. Please log in again.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            var studentObj = _db.Students.FirstOrDefault(e => e.UserId == userId.Value);
+            ViewBag.Data = studentObj;
+            ViewBag.Username = username;
+
+            // If no matching student is found, handle accordingly
+            if (studentObj == null)
+            {
+                TempData["error"] = "No student record found for the current user.";
+                return RedirectToAction("Index", "Student");
+            }
+
+            return View();
         }
 
         [HttpPost]
@@ -95,12 +159,13 @@ namespace ConnectingDatabase.Controllers
             {
                 _db.Students.Update(updatedStudent);
                 _db.SaveChanges();
+                TempData["success"] = "Student updated successfully!";
             }
             else
             {
                 return NotFound();
             }
-            return Ok();
+            return RedirectToAction("Index");
         }
 
         [HttpDelete]
@@ -113,8 +178,6 @@ namespace ConnectingDatabase.Controllers
             }
             _db.Students.Remove(student);
             _db.SaveChanges();
-
-            //return Ok();
             return RedirectToAction("Index");
         }
 
@@ -151,6 +214,7 @@ namespace ConnectingDatabase.Controllers
 
                 var stream = new MemoryStream(package.GetAsByteArray());
                 var content = stream.ToArray();
+                TempData["success"] = "Download successfull!";
                 return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Students.xlsx");
             }
         }
@@ -186,6 +250,7 @@ namespace ConnectingDatabase.Controllers
                 document.Close();
 
                 var content = stream.ToArray();
+                TempData["success"] = "Download successfull!";
                 return File(content, "application/pdf", "Students.pdf");
             }
         }

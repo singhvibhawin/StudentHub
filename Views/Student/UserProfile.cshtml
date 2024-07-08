@@ -1,0 +1,59 @@
+﻿
+@{
+    var data = ViewBag.Data;
+}
+
+@{
+    var Username = ViewBag.Username;
+}
+
+<div class="card mx-auto d-block mt-5" style="width: 50vw;">
+    <div class="card-body">
+        <form method="post" class="container my-4">
+            <div class="p-3 mt-4">
+                <div class="row pb-2">
+                    <h2 class="text-primary text-center">@Username Profile</h2>
+                    <hr />
+                    <div class="col-6 mb-3">
+                        <label class="p-0">Name</label>
+                        <input id="name" class="form-control" value="@data.Name" disabled />
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="o-0">Email</label>
+                        <input id="email" class="form-control" value="@data.Email" disabled />
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="p-0">Contact</label>
+                        <input id="contact" class="form-control" value="@data.Contact" disabled />
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="p-0">Address</label>
+                        <input id="address" class="form-control" value="@data.Address" disabled />
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="p-0">City</label>
+                        <input id="city" class="form-control" value="@data.City" disabled />
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="p-0">Pincode</label>
+                        <input id="pincode" class="form-control" value="@data.Pincode" disabled />
+                    </div>
+                </div>
+                <div class="text-center pb-1 my-2">
+                    <button type="button" id="editButton" class="btn btn-warning text-center px-4">Edit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("editButton").addEventListener("click", function () {
+        document.getElementById("name").disabled = false;
+        document.getElementById("email").disabled = false;
+        document.getElementById("contact").disabled = false;
+        document.getElementById("address").disabled = false;
+        document.getElementById("city").disabled = false;
+        document.getElementById("pincode").disabled = false;
+    });
+</script>

@@ -4,7 +4,6 @@ namespace ConnectingDatabase.Models
 {
     public class Student
     {
-
         public int StudentId { get; set; }
         [Required]
         [MaxLength(30)]
@@ -26,6 +25,7 @@ namespace ConnectingDatabase.Models
         [MinLength(6)]
         [RegularExpression(@"^\(?([0-9]{3})\)?([0-9]{3})$", ErrorMessage = "Non Alpha-Numeric characters with minimum length 6")]
         public string Pincode { get; set; }
+        public int UserId { get; set; }
     }
 
 }
