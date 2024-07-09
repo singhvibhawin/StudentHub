@@ -9,17 +9,19 @@
 
 <div class="card mx-auto d-block mt-5" style="width: 50vw;">
     <div class="card-body">
-        <form method="post" class="container my-4">
+        <form id="profileForm" method="post" class="container my-4">
             <div class="p-3 mt-4">
                 <div class="row pb-2">
                     <h2 class="text-primary text-center">@Username Profile</h2>
                     <hr />
+                    @* <input value="@data.StudentId" hidden/>
+                    <input value="@data.UserId" hidden/> *@
                     <div class="col-6 mb-3">
                         <label class="p-0">Name</label>
                         <input id="name" class="form-control" value="@data.Name" disabled />
                     </div>
                     <div class="col-6 mb-3">
-                        <label class="o-0">Email</label>
+                        <label class="p-0">Email</label>
                         <input id="email" class="form-control" value="@data.Email" disabled />
                     </div>
                     <div class="col-6 mb-3">
@@ -39,8 +41,9 @@
                         <input id="pincode" class="form-control" value="@data.Pincode" disabled />
                     </div>
                 </div>
-                <div class="text-center pb-1 my-2">
-                    <button type="button" id="editButton" class="btn btn-warning text-center px-4">Edit</button>
+                <div class="pb-1 my-2">
+                    <button type="button" id="editButton" class="btn btn-warning px-4">Edit</button>
+                    <button type="button" id="updateButton" class="btn btn-success save-button px-4" style="display: none;">Update</button>
                 </div>
             </div>
         </form>
@@ -48,12 +51,60 @@
 </div>
 
 <script>
-    document.getElementById("editButton").addEventListener("click", function () {
-        document.getElementById("name").disabled = false;
-        document.getElementById("email").disabled = false;
-        document.getElementById("contact").disabled = false;
-        document.getElementById("address").disabled = false;
-        document.getElementById("city").disabled = false;
-        document.getElementById("pincode").disabled = false;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButton = document.getElementById('editButton');
+        const updateButton = document.getElementById('updateButton');
+        const formFields = document.querySelectorAll('#profileForm input');
+
+        editButton.addEventListener('click', function () {
+            // Enable form fields for editing
+            formFields.forEach(field => {
+                field.removeAttribute('disabled');
+            });
+
+            // Toggle button visibility
+            editButton.style.display = 'none';
+            updateButton.style.display = 'block';
+        });
+
+        updateButton.addEventListener('click', function () {
+            // Disable form fields after update
+            formFields.forEach(field => {
+                field.setAttribute('disabled', true);
+            });
+
+            // Toggle button visibility
+            editButton.style.display = 'block';
+            updateButton.style.display = 'none';
+
+            // Prepare data to send via AJAX
+            const formData = {
+                StudentId: '@data.StudentId',
+                UserId: '@data.UserId',
+                Name: document.getElementById('name').value,
+                Email: document.getElementById('email').value,
+                Contact: document.getElementById('contact').value,
+                Address: document.getElementById('address').value,
+                City: document.getElementById('city').value,
+                Pincode: document.getElementById('pincode').value
+            };
+
+            // AJAX request
+            $.ajax({
+                url: '/Student/Edit',  // Replace with your actual URL and controller action
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    // Handle success response here
+                    console.log('Data updated successfully');
+                },
+                error: function (xhr, status, error) {
+                    // Handle error response here
+                    console.error('Error updating data:', error);
+                }
+            });
+        });
     });
 </script>

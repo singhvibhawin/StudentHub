@@ -37,6 +37,14 @@ namespace ConnectingDatabase.Controllers
         public async Task<ActionResult> Index(int page = 1)
         {
             string username = HttpContext.Session.GetString("_UserName");
+
+            if (username == null)
+            {
+                TempData["error"] = "Access denied. Please log in to continue.";
+                Console.WriteLine("Access denied. Please log in to continue.");
+                return RedirectToAction("Login","Account");
+            }
+
             if (username == "user")
             {
                 int? userId = HttpContext.Session.GetInt32("_UserId");
@@ -55,6 +63,7 @@ namespace ConnectingDatabase.Controllers
             {
                 page = 1;
             }
+
             int pageSize = 5;
             int totalRecord = await _db.Students.CountAsync();
             int totalPages = (int)Math.Ceiling(totalRecord / (double)pageSize);
@@ -69,6 +78,7 @@ namespace ConnectingDatabase.Controllers
                 students = studentsObj,
                 student = new Student()
             };
+
             ViewBag.TotalPages = totalPages;
             ViewBag.CurrentPage = page;
             return View(viewModel);
@@ -130,6 +140,8 @@ namespace ConnectingDatabase.Controllers
         public IActionResult UserProfile()
         {
             string username = HttpContext.Session.GetString("_UserName");
+            ViewBag.Username = username;
+
             int? userId = HttpContext.Session.GetInt32("_UserId");
     
             if (userId == null)
@@ -140,7 +152,6 @@ namespace ConnectingDatabase.Controllers
 
             var studentObj = _db.Students.FirstOrDefault(e => e.UserId == userId.Value);
             ViewBag.Data = studentObj;
-            ViewBag.Username = username;
 
             // If no matching student is found, handle accordingly
             if (studentObj == null)
@@ -148,7 +159,7 @@ namespace ConnectingDatabase.Controllers
                 TempData["error"] = "No student record found for the current user.";
                 return RedirectToAction("Index", "Student");
             }
-
+        
             return View();
         }
 
