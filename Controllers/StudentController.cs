@@ -5,6 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using System.Linq;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ConnectingDatabase.Controllers
 {
@@ -73,6 +81,17 @@ namespace ConnectingDatabase.Controllers
                                 .Take(pageSize)
                                 .ToListAsync();
 
+            //var studentsObj = await _db.Students.OrderBy(s => s.StudentId)
+            //                        .Skip((page - 1) * pageSize)
+            //                        .Take(pageSize)
+            //                        .Select(s => new
+            //                        {
+            //                            StudentId = s.StudentId,
+            //                            FilePaths = s.FilePaths ?? string.Empty, // Handle null values
+            //                            // Include other properties with null handling
+            //                        })
+            //                        .ToListAsync();
+            
             var viewModel = new StudentModel
             {
                 students = studentsObj,
@@ -94,15 +113,41 @@ namespace ConnectingDatabase.Controllers
         }
 
         [HttpPost]
-        public IActionResult Index(Student student)
+        public async Task<IActionResult> Index(Student student)
         {
-            if (ModelState.IsValid)
+            //var docType = Request.Form["docType"];
+            //var file = Request.Form.Files["file"];
+
+            //if (file != null && file.Length > 0)
+            //{
+            //    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+                
+            //    if (!Directory.Exists(filePath))
+            //    {
+            //        Directory.CreateDirectory(filePath);
+            //    }
+
+            //    var fileName = $"{userId}_{Path.GetFileName(file.FileName)}";
+            //    var uploadPath = Path.Combine(filePath, fileName);
+
+            //    using (var stream = new FileStream(filePath, FileMode.Create))
+            //    {
+            //        await file.CopyToAsync(stream);
+            //    }
+                 
+
+                // Save the file path to the database
+                // Example: SaveFilePathToDatabase(filePath);
+
+            //    return Json(new { success = true, filePath });
+            //}
+
+            if (student != null)
             {
                 var existingStudent = _db.Students.FirstOrDefault(e => e.Email == student.Email);
 
                 if (existingStudent != null)
                 {
-                    // Email already exists
                     TempData["error"] = "Email already exists!";
                     return View();
                 }
@@ -112,29 +157,97 @@ namespace ConnectingDatabase.Controllers
 
                 if (userId == null)
                 {
-                    // Handle the case where the userId is not found in the session
                     TempData["error"] = "User session has expired. Please log in again.";
                     return RedirectToAction("Login", "Account");
                 }
 
-                // Set the UserId property of the student
-                student.UserId = userId.Value;
+                var filePaths = new List<string>();
 
-                _db.Students.Add(student).ToString();
+                if (student.Files != null && student.Files.Count > 0)
+                {
+                    var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+
+                    if (!Directory.Exists(uploadPath))
+                    {
+                        Directory.CreateDirectory(uploadPath);
+                    }
+
+                    foreach (var files in student.Files)
+                    {
+                        if (files.Length > 0)
+                        {
+                            var fileName = $"{userId}_{Path.GetFileName(files.FileName)}";
+                            var filePath = Path.Combine(uploadPath, fileName);
+                            filePaths.Add(filePath);
+
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await files.CopyToAsync(stream);
+                            }
+                        }
+                    }
+                }
+
+                // Set the UserId property and the FilePaths property of the student
+                student.UserId = userId.Value;
+                student.FilePaths = string.Join(";", filePaths);
+
+                _db.Students.Add(student);
                 _db.SaveChanges();
 
                 TempData["success"] = "Student registered successfully!";
                 return RedirectToAction("UserProfile");
             }
 
-            //If Model State is not valid 
             var viewModel = new StudentModel
             {
                 students = _db.Students.ToList(),
                 student = new Student()
             };
+                return View("Index", viewModel);
+        }
 
-            return View("Index");
+        [HttpPost]
+        public async Task<IActionResult> UploadDocument()
+        {
+            int? userId = HttpContext.Session.GetInt32("_UserId");
+            var docType = Request.Form["docType"];
+            var file = Request.Form.Files["file"];
+
+            if (file != null && file.Length > 0)
+            {
+                var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/StudentsDocuments");
+
+                var fileName = $"{userId}_{Path.GetFileName(file.FileName)}";
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                return Json(new { success = true, filePath });
+            }
+
+            return Json(new { success = false });
+        }
+
+        [HttpPost]
+        public IActionResult DeleteDocument([FromBody] DeleteDocumentRequest request)
+        {
+            int? userId = HttpContext.Session.GetInt32("_UserId");
+
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/StudentsDocuments");
+
+            var destructureFilePath = request.FilePath.Split('_');
+            var fileName = $"{userId}_{destructureFilePath[1]}";
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+                return Json(new { success = true });
+            }
+            return Json(new { success = false });
         }
 
         public IActionResult UserProfile()
@@ -163,20 +276,55 @@ namespace ConnectingDatabase.Controllers
             return View();
         }
 
+        public IActionResult Documents(int id)
+        {
+            var student = _db.Students.FirstOrDefault(s => s.StudentId == id);
+            var uploadFolder = "~/uploads/";
+
+            var filePaths = student.FilePaths.Split(';').Select(file =>
+                {
+                    var fileName = uploadFolder + Path.GetFileName(file);
+                    var relativePath = file.Replace(@"C:\StudentHub\wwwroot\", "");
+                    return new { FileName = fileName, RelativePath = relativePath };
+                }).ToArray();
+
+            return View(filePaths);
+        }
+
         [HttpPost]
-        public IActionResult Edit([FromBody]  Student updatedStudent)         
+        public IActionResult Edit([FromBody]  Student updatedStudent)
         {
             if (updatedStudent != null)
             {
-                _db.Students.Update(updatedStudent);
+                //    var existingStudent = _db.Students.Find(id => id.UserId == updatedStudent.UserId);
+                var existingStudent = _db.Students.FirstOrDefault(uid => uid.UserId == updatedStudent.UserId);
+                if (existingStudent == null)
+                {
+                    return NotFound();
+                }
+
+                // Update other properties as needed
+                existingStudent.Name = updatedStudent.Name;
+                existingStudent.Email = updatedStudent.Email;
+                existingStudent.Contact = updatedStudent.Contact;
+                existingStudent.Address = updatedStudent.Address;
+                existingStudent.City = updatedStudent.City;
+                existingStudent.Pincode = updatedStudent.Pincode;
+
+                if (updatedStudent.FilePaths != null)
+                {
+                    existingStudent.FilePaths = updatedStudent.FilePaths;
+                }
+
+                _db.Students.Update(existingStudent);
                 _db.SaveChanges();
                 TempData["success"] = "Student updated successfully!";
+                return RedirectToAction("Index");
             }
             else
             {
                 return NotFound();
             }
-            return RedirectToAction("Index");
         }
 
         [HttpDelete]

@@ -30,4 +30,8 @@
     <PackageReference Include="X.PagedList.Mvc.Core" Version="9.1.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\StudentsDocuments\" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,35 @@
+﻿@model IEnumerable<dynamic>
+@using System.IO
+
+<div class="container">
+    <h2 class="text-center">Documents</h2>
+
+    <div class="text-end mb-2">
+        <a class="btn btn-success mx-2 text-end" asp-controller="Student" asp-action="Index">Back to List</a>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        Console.WriteLine(Model);
+        var count = 1;
+
+        <ul class="d-flex mx-2">
+            @foreach (var file in Model)
+            {
+                <div class="card text-center" style="width: 18rem;">
+                    <img src="@Url.Content(file.FileName)" class="card-img-top" width="200" height="200">
+                    <div class="card-body">
+                        <h5 class="card-title">Document @count</h5>
+                        <a href="@Url.Content(file.RelativePath)" class="btn btn-sm btn-primary" target="_blank">View</a>
+                    </div>
+                </div>
+                count++;
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No documents available for this Student.</p>
+    }
+
+</div>

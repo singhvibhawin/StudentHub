@@ -3,55 +3,73 @@
 @{
     var username = ViewBag.Username;
 }
-
+      
 @if (username == "user")
 {
-    <div class="card mx-auto d-block" style="width: 50vw;">
+    <div class="card mx-auto d-block mt-4" style="width: 50vw;">
         <div class="card-body">
-            <form method="post" class="container my-4">
-                <div class="p-3 mt-4">
+            <form method="post" class="container my-4" enctype="multipart/form-data">
+                <div class="p-3 mt-3" style="max-height: 600px; overflow-y: auto;">
                     <div class="row pb-2">
                         <h2 class="text-primary text-center">Student Registration Form</h2>
                         <hr />
                         <input asp-for="@Model.student.StudentId" hidden />
-                        <div class="col-6 mb-3">
+                        <div class="col-6 mb-2">
                             <label asp-for="@Model.student.Name" class="p-0"></label>
                             <input asp-for="@Model.student.Name" class="form-control" />
                             <span asp-validation-for="@Model.student.Name" class="text-danger"></span>
                         </div>
-                        <div class="col-6 mb-3">
+                        <div class="col-6 mb-2">
                             <label asp-for="@Model.student.Email" class="p-0"></label>
                             <input asp-for="@Model.student.Email" class="form-control" />
                             <span asp-validation-for="@Model.student.Email" class="text-danger"></span>
                         </div>
-                        <div class="col-6 mb-3">
+                        <div class="col-6 mb-2">
                             <label asp-for="@Model.student.Contact" class="p-0"></label>
                             <input asp-for="@Model.student.Contact" class="form-control" />
                             <span asp-validation-for="@Model.student.Contact" class="text-danger"></span>
                         </div>
-                        <div class="col-6 mb-3">
+                        <div class="col-6 mb-2">
                             <label asp-for="@Model.student.Address" class="p-0"></label>
                             <input asp-for="@Model.student.Address" class="form-control" />
                             <span asp-validation-for="@Model.student.Address" class="text-danger"></span>
                         </div>
-                        <div class="col-6 mb-3">
+                        <div class="col-6 mb-2">
                             <label asp-for="@Model.student.City" class="p-0"></label>
                             <input asp-for="@Model.student.City" class="form-control" />
                             <span asp-validation-for="@Model.student.City" class="text-danger"></span>
                         </div>
-                        <div class="col-6 mb-3">
+                        <div class="col-6 mb-2">
                             <label asp-for="@Model.student.Pincode" class="p-0"></label>
                             <input asp-for="@Model.student.Pincode" class="form-control" />
                             <span asp-validation-for="@Model.student.Pincode" class="text-danger"></span>
                         </div>
+                        <div class="dropdown col-4 mt-2">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Select Document Type
+                            </button>
+                            <ul class="dropdown-menu" id="documentTypeDropdown">
+                                <li><a class="dropdown-item" data-doc-type="Aadhar Card">Aadhar Card</a></li>
+                                <li><a class="dropdown-item" data-doc-type="Pan Card">Pan Card</a></li>
+                                <li><a class="dropdown-item" data-doc-type="10th Marksheet">10th Marksheet</a></li>
+                                <li><a class="dropdown-item" data-doc-type="12th Marksheet">12th Marksheet</a></li>
+                                <li><a class="dropdown-item" data-doc-type="Resume">Resume</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="col-8"></div>
+
+                        <div id="selectedDocuments" class="row text-center"></div>
+                       
                     </div>
                     <div class="text-center pb-1 my-2">
                         <button type="submit" class="btn btn-primary text-center px-4">Submit</button>
                     </div>
                 </div>
-            </form>
+            </form> 
         </div>
     </div>
+
 }
 else
 {
@@ -65,6 +83,7 @@ else
                 <th scope="col">Address</th>
                 <th scope="col">City</th>
                 <th scope="col">Pincode</th>
+                <th scope="col">Documents</th>
                 <th scope="col">Action</th>
             </tr>
         </thead>
@@ -80,11 +99,16 @@ else
                         <td class="editable" data-field="Address">@obj.Address</td>
                         <td class="editable" data-field="City">@obj.City</td>
                         <td class="editable" data-field="Pincode">@obj.Pincode</td>
+                        <td class="editable" data-field="Documents">
+                            <div class="btn-group" role="group">
+                                <a class="btn btn-success mx-2" asp-controller="Student" asp-action="Documents" asp-route-id="@obj.StudentId">Documents</a>
+                            </div>
+                        </td>
                         <td>
-                            <div class="w-75 btn-group" role="group">
-                                <button class="btn btn-warning mx-2 edit-button rounded">Edit</button>
-                                <button class="btn btn-success mx-2 save-button rounded" style="display:none;">Update</button>
-                                <button type="submit" class="btn btn-danger mx-2 delete-button rounded">Delete</button>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-warning mx-2 edit-button">Edit</button>
+                                <button class="btn btn-success mx-2 save-button" style="display:none;">Update</button>
+                                <button type="submit" class="btn btn-danger mx-2 delete-button">Delete</button>
                             </div>
                         </td>
                     </tr>
@@ -173,7 +197,7 @@ else
                 }
             });
         });
-             
+
         $('.delete-button').click(function () {
             if (confirm("Are you sure you want to delete this student?")) {
                 var row = $(this).closest('tr');
@@ -192,7 +216,7 @@ else
                 });
             }
         });
-    
+
         $('#downloadExcel').click(function () {
             window.location.href = '@Url.Action("DownloadExcel", "Student")';
         });
@@ -200,8 +224,8 @@ else
         $('#downloadPdf').click(function () {
             window.location.href = '@Url.Action("DownloadPdf", "Student")';
         });
-    });   
-    
+    });
+
     $(document).ready(function () {
         $('#studentsTable').DataTable({
             "ajax": {
@@ -220,10 +244,108 @@ else
             "info": true
         });
     });
+
+    const selectedDocuments = document.getElementById("selectedDocuments");
+    const documentTypeDropdown = document.getElementById("documentTypeDropdown");
+
+    documentTypeDropdown.addEventListener("click", function (event) {
+        if (event.target.dataset.docType) {
+            const docType = event.target.dataset.docType;
+            const existingDocs = Array.from(selectedDocuments.children).map(child => child.dataset.docType);
+            if (!existingDocs.includes(docType)) {
+                const docRow = document.createElement("div");
+                docRow.className = "my-3 d-flex text-center align-items-center col-12";
+                docRow.dataset.docType = docType;
+
+                const uploadField = `
+                            <label class="form-label col-2">${docType}</label>
+                        <input type="file" name="${docType.replace(/ /g, '_')}" class="form-control border border-secondary" required />
+                        <button type="button" class="btn btn-success my-2" onclick="uploadDocument(this, '${docType}')">Upload</button>
+                            <div class="uploadStatus d-flex text-center align-items-center"></div>
+                    `;
+                docRow.innerHTML = uploadField;
+                selectedDocuments.appendChild(docRow);
+            } else {
+                alert("Document type already added.");
+            }
+        }
+    });
+
+    const allowedFileTypes = ["image/jpeg", "image/png", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+
+    function uploadDocument(button, docType) {
+        const input = button.previousElementSibling;
+        const file = input.files[0];
+
+        // Client-side validation for file type
+        if (!allowedFileTypes.includes(file.type)) {
+            alert("Invalid file type. Only jpg, jpeg, png, pdf, doc, docx files are allowed.");
+            const docRow = document.querySelector(`div[data-doc-type='${docType}']`);
+            if (docRow) {
+                docRow.remove();
+            }
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", input.files[0]);
+        formData.append("docType", docType);
+
+        fetch('@Url.Action("UploadDocument","Student")', {  // Replace with your actual upload endpoint
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    button.nextElementSibling.innerHTML = `
+                        <p class="text-success mx-4">File Uploaded Successfully! File: ${input.files[0].name}</p>
+                        <button type="button" class="btn btn-danger btn-sm mt-2 col-4" onclick="deleteDocument('${docType}', '${data.filePath}')">X</button>
+                    `;
+                    input.style.display = "none";
+                    button.style.display = "none";
+                } else {
+                    button.nextElementSibling.innerText = "Upload Failed!";
+                }
+            })
+            .catch(error => {
+                button.nextElementSibling.innerText = "Upload Error!";
+                console.error('hi');
+                console.error(error);
+            });
+    }
+
+    function deleteDocument(docType, filePath) {
+        fetch('@Url.Action("DeleteDocument", "Student")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ docType, filePath })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const docRow = document.querySelector(`div[data-doc-type='${docType}']`);
+                    if (docRow) {
+                        docRow.remove();
+                    }
+                } else {
+                    alert("Failed to delete the document.");
+                }
+            })
+            .catch(error => {
+                console.error('Delete Error:', error);
+            });
+    }
+
 </script>
 
 @section Scripts {
     @{
-        <partial name="_ValidationScriptsPartial" />
+            <partial name="_ValidationScriptsPartial" />
+    }
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }

@@ -115,13 +115,19 @@
         </ul>
     </div>
 
-    <section class="home-section">
-        <div class="home-content">
-            <i class='bx bx-menu'></i>
-        </div>
-        <partial name="_Notification" />
-        @RenderBody()
-    </section>
+@* <section class="home-section">
+         <div class="home-content">
+             <i class='bx bx-menu'></i>
+         </div>
+         <partial name="_Notification" />
+         @RenderBody()
+     </section> *@    
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
 
     <script>
         let arrow = document.querySelectorAll(".arrow");
