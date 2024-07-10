@@ -56,48 +56,6 @@ namespace ConnectingDatabase.Controllers
 
             if (existingUser != null)
             {
-                //var existingStudent = _db.Students.FirstOrDefault(e => e.Email == users.Email);
-
-                //if (existingStudent != null)
-                //{
-                //    var userProfileViewModel = new UserProfileViewModel
-                //    {
-                //        Email = existingUser.Email,
-                //        Username = existingUser.Username,
-                //        Password = existingUser.Password,
-                //        Name = existingStudent.Name,
-                //        Contact = existingStudent.Contact,
-                //        Address = existingStudent.Address,
-                //        City = existingStudent.City,
-                //        Pincode = existingStudent.Pincode
-                //    };
-
-                //    if (existingUser.Username == "admin")
-                //    {
-                //        TempData["success"] = "Login Successfully - ADMIN!";
-                //        Console.WriteLine("Login Successfully as ADMIN!");
-
-                //        //Storing Data into Session using SetString and SetInt32 method
-                //        // Assuming 'existingUser' is an object that has properties 'Username' and 'UserId'
-                //        HttpContext.Session.SetString("_Username", existingUser.Username);
-                //        HttpContext.Session.SetInt32("_UserId", existingUser.UserId); // Assuming UserId is an int
-
-                //        return RedirectToAction("Index", "Home");
-                //        //return RedirectToAction("UserProfile", userProfileViewModel);
-                //    }
-                //    else
-                //    {
-                //        TempData["success"] = "Login Successfully - USER!";
-                //        Console.WriteLine("Login Successfully as USER!");
-
-                //        HttpContext.Session.SetString("_Username", existingUser.Username);
-                //        HttpContext.Session.SetInt32("_UserId", existingUser.UserId); // Assuming UserId is an int
-
-                //        return RedirectToAction("Index", "Home");
-                //        //return RedirectToAction("UserProfile", userProfileViewModel);
-                //    }
-                //}
-
                 if (existingUser.Username == "admin")
                 {
                     TempData["success"] = "Login Successfully - ADMIN!";

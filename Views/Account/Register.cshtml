@@ -1,6 +1,5 @@
 ﻿@model User;
 
-
 <div class="card mx-auto d-block" style="width: 50vw;">
     <div class="card-body">
         <form method="post" class="container my-4">
@@ -8,10 +7,7 @@
                 <div class="row pb-2">
                     <h2 class="text-primary text-center">Register</h2>
                     <hr />
-                    @* <div class="col-12 mb-3">
-                        <label asp-for="Username" class="p-0"></label> *@
-                        <input asp-for="Username" class="form-control" value="user" hidden/>
-                    @* </div> *@
+                    <input asp-for="Username" class="form-control" value="user" hidden/>
                     <div class="col-12 mb-3">
                         <label asp-for="Email" class="p-0"></label>
                         <input asp-for="Email" class="form-control" />

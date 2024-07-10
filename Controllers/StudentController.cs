@@ -68,10 +68,10 @@ namespace ConnectingDatabase.Controllers
             int totalRecord = await _db.Students.CountAsync();
             int totalPages = (int)Math.Ceiling(totalRecord / (double)pageSize);
             var studentsObj = await _db.Students
-                                                 .OrderBy(s => s.StudentId) // Ensure ordering for consistent paging
-                                                 .Skip((page - 1) * pageSize)
-                                                 .Take(pageSize)
-                                                 .ToListAsync();
+                                .OrderBy(s => s.StudentId) // Ensure ordering for consistent paging
+                                .Skip((page - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToListAsync();
 
             var viewModel = new StudentModel
             {
