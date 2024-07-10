@@ -46,14 +46,13 @@ app.UseAuthorization();
 
 //For session
 app.UseSession();
-//app.UseMvcWithDefaultRoute();
 //For session
 
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllerRoute(
         name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}");
+        pattern: "{controller=Account}/{action=Login}/{id?}");
 });
 
 app.Run();
