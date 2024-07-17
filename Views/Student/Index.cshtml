@@ -305,7 +305,7 @@ else
                     input.style.display = "none";
                     button.style.display = "none";
                 } else {
-                    button.nextElementSibling.innerText = "Upload Failed!";
+                    button.nextElementSibling.innerText = "Upload Failed! Can't upload file with the same name.";
                 }
             })
             .catch(error => {

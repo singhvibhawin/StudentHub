@@ -214,12 +214,19 @@ namespace ConnectingDatabase.Controllers
             var docType = Request.Form["docType"];
             var file = Request.Form.Files["file"];
 
+
             if (file != null && file.Length > 0)
             {
                 var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/StudentsDocuments");
 
                 var fileName = $"{userId}_{Path.GetFileName(file.FileName)}";
                 var filePath = Path.Combine(uploadPath, fileName);
+
+                // Check if a file with the same name already exists
+                if (System.IO.File.Exists(filePath))
+                {
+                    return Json(new { success = false, message = "A file with the same name already exists." });
+                }
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
