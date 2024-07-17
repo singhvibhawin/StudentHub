@@ -69,12 +69,11 @@
             </form> 
         </div>
     </div>
-
 }
 else
 {
     <h2 class="text-primary text-center mb-3">Students Profile</h2>
-    <table id="studentsTable" class="table table-hover table-bordered display mb-3">
+    <table id="studentsTable" class="table table-hover table-bordered display">
         <thead>
             <tr class="text-center">
                 <th scope="col">Name</th>
@@ -99,9 +98,9 @@ else
                         <td class="editable" data-field="Address">@obj.Address</td>
                         <td class="editable" data-field="City">@obj.City</td>
                         <td class="editable" data-field="Pincode">@obj.Pincode</td>
-                        <td class="editable" data-field="Documents">
+                        <td>
                             <div class="btn-group" role="group">
-                                <a class="btn btn-success mx-2" asp-controller="Student" asp-action="Documents" asp-route-id="@obj.StudentId">Documents</a>
+                                <a class="btn btn-success mx-2" asp-controller="Student" asp-action="Documents" asp-route-id="@obj.UserId">Documents</a>
                             </div>
                         </td>
                         <td>
@@ -300,7 +299,7 @@ else
                 if (data.success) {
                     button.nextElementSibling.innerHTML = `
                         <p class="text-success mx-4">File Uploaded Successfully! File: ${input.files[0].name}</p>
-                        <button type="button" class="btn btn-danger btn-sm mt-2 col-4" onclick="deleteDocument('${docType}', '${data.filePath}')">X</button>
+                        <button type="button" class="btn btn-danger mt-2" onclick="deleteDocument('${docType}', '${data.filePath}')">X</button>
                     `;
                     input.style.display = "none";
                     button.style.display = "none";

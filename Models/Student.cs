@@ -35,14 +35,14 @@ namespace ConnectingDatabase.Models
 
         public int UserId { get; set; }
 
-        [Display(Name = "Upload Files")]
-        [DataType(DataType.Upload)]
-        [FileExtensions(Extensions = "jpg,jpeg,png,pdf,doc,docx")]
-        [NotMapped]
-        public IFormFileCollection Files { get; set; }
+        //[Display(Name = "Upload Files")]
+        //[DataType(DataType.Upload)]
+        //[FileExtensions(Extensions = "jpg,jpeg,png,pdf,doc,docx")]
+        //[NotMapped]
+        //public IFormFileCollection Files { get; set; }
 
-        // Property to store the file paths or names in the database
-        public string FilePaths { get; set; }
+        //// Property to store the file paths or names in the database
+        //public string FilePaths { get; set; }
     }
 }
 

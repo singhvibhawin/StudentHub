@@ -3,16 +3,7 @@ using ConnectingDatabase.Data;
 using ConnectingDatabase.Models;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
-using iTextSharp.text;
 using iTextSharp.text.pdf;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.IO;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
-using System.Linq;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ConnectingDatabase.Controllers
 {
@@ -115,34 +106,7 @@ namespace ConnectingDatabase.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(Student student)
         {
-            //var docType = Request.Form["docType"];
-            //var file = Request.Form.Files["file"];
-
-            //if (file != null && file.Length > 0)
-            //{
-            //    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-                
-            //    if (!Directory.Exists(filePath))
-            //    {
-            //        Directory.CreateDirectory(filePath);
-            //    }
-
-            //    var fileName = $"{userId}_{Path.GetFileName(file.FileName)}";
-            //    var uploadPath = Path.Combine(filePath, fileName);
-
-            //    using (var stream = new FileStream(filePath, FileMode.Create))
-            //    {
-            //        await file.CopyToAsync(stream);
-            //    }
-                 
-
-                // Save the file path to the database
-                // Example: SaveFilePathToDatabase(filePath);
-
-            //    return Json(new { success = true, filePath });
-            //}
-
-            if (student != null)
+            if (ModelState.IsValid)
             {
                 var existingStudent = _db.Students.FirstOrDefault(e => e.Email == student.Email);
 
@@ -161,36 +125,8 @@ namespace ConnectingDatabase.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-                var filePaths = new List<string>();
-
-                if (student.Files != null && student.Files.Count > 0)
-                {
-                    var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-
-                    if (!Directory.Exists(uploadPath))
-                    {
-                        Directory.CreateDirectory(uploadPath);
-                    }
-
-                    foreach (var files in student.Files)
-                    {
-                        if (files.Length > 0)
-                        {
-                            var fileName = $"{userId}_{Path.GetFileName(files.FileName)}";
-                            var filePath = Path.Combine(uploadPath, fileName);
-                            filePaths.Add(filePath);
-
-                            using (var stream = new FileStream(filePath, FileMode.Create))
-                            {
-                                await files.CopyToAsync(stream);
-                            }
-                        }
-                    }
-                }
-
                 // Set the UserId property and the FilePaths property of the student
                 student.UserId = userId.Value;
-                student.FilePaths = string.Join(";", filePaths);
 
                 _db.Students.Add(student);
                 _db.SaveChanges();
@@ -208,15 +144,22 @@ namespace ConnectingDatabase.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UploadDocument()
+        public async Task<IActionResult> UploadDocument(Documents docs)
         {
-            int? userId = HttpContext.Session.GetInt32("_UserId");
             var docType = Request.Form["docType"];
             var file = Request.Form.Files["file"];
 
 
             if (file != null && file.Length > 0)
             {
+                int? userId = HttpContext.Session.GetInt32("_UserId");
+
+                if (userId == null)
+                {
+                    TempData["error"] = "Session expired! Try Again!";
+                    return Json(new { success = false, message = TempData["error"] });
+                }
+
                 var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/StudentsDocuments");
 
                 var fileName = $"{userId}_{Path.GetFileName(file.FileName)}";
@@ -232,9 +175,18 @@ namespace ConnectingDatabase.Controllers
                 {
                     await file.CopyToAsync(stream);
                 }
+
+                docs.FilePaths = filePath;
+                docs.DocumentName = docType;
+                docs.UserId = userId.Value;
+
+                _db.Documents.Add(docs);
+                _db.SaveChanges();
+                
+                TempData["success"] = "Document uploaded successfully!";
+
                 return Json(new { success = true, filePath });
             }
-
             return Json(new { success = false });
         }
 
@@ -243,11 +195,30 @@ namespace ConnectingDatabase.Controllers
         {
             int? userId = HttpContext.Session.GetInt32("_UserId");
 
+            if (userId == null)
+            {
+                return Json(new { success = false, message = "User is not logged in." });
+            }
+
             var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/StudentsDocuments");
 
             var destructureFilePath = request.FilePath.Split('_');
+
             var fileName = $"{userId}_{destructureFilePath[1]}";
             var filePath = Path.Combine(uploadPath, fileName);
+
+            // Find the document based on both UserId and FilePath
+            var docs = _db.Documents.FirstOrDefault(s => s.UserId == userId && s.FilePaths == filePath);
+
+            if (docs == null)
+            {
+                return Json(new { success = false, message = "Document not found." });
+            }
+
+            _db.Documents.Remove(docs);
+            _db.SaveChanges();
+
+            TempData["success"] = "Document deleted successfully!";
 
             if (System.IO.File.Exists(filePath))
             {
@@ -285,15 +256,22 @@ namespace ConnectingDatabase.Controllers
 
         public IActionResult Documents(int id)
         {
-            var student = _db.Students.FirstOrDefault(s => s.StudentId == id);
-            var uploadFolder = "~/uploads/";
+            var documents = _db.Documents.Where(s => s.UserId == id).ToList();
+            var uploadFolder = "~/StudentsDocuments/";
 
-            var filePaths = student.FilePaths.Split(';').Select(file =>
+            var filePaths = documents.SelectMany(doc => doc.FilePaths.Split(';')
+                .Select(file =>
                 {
                     var fileName = uploadFolder + Path.GetFileName(file);
                     var relativePath = file.Replace(@"C:\StudentHub\wwwroot\", "");
-                    return new { FileName = fileName, RelativePath = relativePath };
-                }).ToArray();
+                    return new
+                    {
+                        FileName = fileName,
+                        RelativePath = relativePath,
+                        DocumentName = doc.DocumentName
+                    };
+                }))
+                .ToArray();
 
             return View(filePaths);
         }
@@ -303,7 +281,30 @@ namespace ConnectingDatabase.Controllers
         {
             if (updatedStudent != null)
             {
-                //    var existingStudent = _db.Students.Find(id => id.UserId == updatedStudent.UserId);
+                string username = HttpContext.Session.GetString("_UserName");
+
+                if (username == "admin")
+                {
+                    var student = _db.Students.FirstOrDefault(uid => uid.StudentId == updatedStudent.StudentId);
+                    if (student == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Update other properties as needed
+                    student.Name = updatedStudent.Name;
+                    student.Email = updatedStudent.Email;
+                    student.Contact = updatedStudent.Contact;
+                    student.Address = updatedStudent.Address;
+                    student.City = updatedStudent.City;
+                    student.Pincode = updatedStudent.Pincode;
+
+                    _db.Students.Update(student);
+                    _db.SaveChanges();
+                    TempData["success"] = "Student updated successfully!";
+                    return RedirectToAction("Index");
+                }
+
                 var existingStudent = _db.Students.FirstOrDefault(uid => uid.UserId == updatedStudent.UserId);
                 if (existingStudent == null)
                 {
@@ -317,11 +318,6 @@ namespace ConnectingDatabase.Controllers
                 existingStudent.Address = updatedStudent.Address;
                 existingStudent.City = updatedStudent.City;
                 existingStudent.Pincode = updatedStudent.Pincode;
-
-                if (updatedStudent.FilePaths != null)
-                {
-                    existingStudent.FilePaths = updatedStudent.FilePaths;
-                }
 
                 _db.Students.Update(existingStudent);
                 _db.SaveChanges();
@@ -390,7 +386,7 @@ namespace ConnectingDatabase.Controllers
             List<Student> students = _db.Students.ToList();
             using (var stream = new MemoryStream())
             {
-                var document = new Document();
+                var document = new iTextSharp.text.Document();
                 PdfWriter.GetInstance(document, stream).CloseStream = false;
                 document.Open();
 

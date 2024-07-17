@@ -34,7 +34,7 @@ namespace ConnectingDatabase.Controllers
                     return RedirectToAction("Login");
                 }
 
-                _db.Users.Add(users).ToString();
+                _db.Users.Add(users); // No need for .ToString()
                 _db.SaveChanges();
 
                 TempData["success"] = "Registered Successfullly!"; 
