@@ -4,6 +4,7 @@ using ConnectingDatabase.Models;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
 using iTextSharp.text.pdf;
+using Microsoft.CodeAnalysis;
 
 namespace ConnectingDatabase.Controllers
 {
@@ -244,6 +245,9 @@ namespace ConnectingDatabase.Controllers
             var studentObj = _db.Students.FirstOrDefault(e => e.UserId == userId.Value);
             ViewBag.Data = studentObj;
 
+            var docsObj = _db.Documents.FirstOrDefault(e => e.UserId == userId.Value);
+            ViewBag.Docs = docsObj;
+
             // If no matching student is found, handle accordingly
             if (studentObj == null)
             {
@@ -252,28 +256,6 @@ namespace ConnectingDatabase.Controllers
             }
         
             return View();
-        }
-
-        public IActionResult Documents(int id)
-        {
-            var documents = _db.Documents.Where(s => s.UserId == id).ToList();
-            var uploadFolder = "~/StudentsDocuments/";
-
-            var filePaths = documents.SelectMany(doc => doc.FilePaths.Split(';')
-                .Select(file =>
-                {
-                    var fileName = uploadFolder + Path.GetFileName(file);
-                    var relativePath = file.Replace(@"C:\StudentHub\wwwroot\", "");
-                    return new
-                    {
-                        FileName = fileName,
-                        RelativePath = relativePath,
-                        DocumentName = doc.DocumentName
-                    };
-                }))
-                .ToArray();
-
-            return View(filePaths);
         }
 
         [HttpPost]
@@ -341,6 +323,104 @@ namespace ConnectingDatabase.Controllers
             _db.Students.Remove(student);
             _db.SaveChanges();
             return RedirectToAction("Index");
+        }
+
+        public IActionResult Documents(int id)
+        {
+            var documents = _db.Documents.Where(s => s.UserId == id).ToList();
+            var uploadFolder = "~/StudentsDocuments/";
+
+            var filePaths = documents.SelectMany(doc => doc.FilePaths.Split(';')
+                .Select(file =>
+                {
+                    var fileName = uploadFolder + Path.GetFileName(file);
+                    var relativePath = file.Replace(@"C:\StudentHub\wwwroot\", "");
+                    return new
+                    {
+                        FileName = fileName,
+                        RelativePath = relativePath,
+                        DocumentId = doc.DocumentId,
+                        DocumentName = doc.DocumentName,
+                        Remarks = doc.Remarks,
+                        DocumentStatus = doc.DocumentStatus
+                    };
+                }
+            ))
+            .ToArray();
+
+            ViewBag.UserId = id;
+
+            return View(filePaths);
+        }
+
+        [HttpPost]
+        public IActionResult ApproveOrReject([FromBody] Documents model)
+        {
+            if (model == null)
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            // Process the action (approve or reject) based on the model data
+            if (model.DocumentStatus == "Approve")
+            {
+                // Find all documents where UserId matches the UserId in the model
+                var documents = _db.Documents.Where(doc => doc.UserId == model.UserId).ToList();
+
+                if (documents == null || !documents.Any())
+                {
+                    return NotFound("No documents found for the specified UserId.");
+                }
+
+                // Update the status and remarks for each document
+                foreach (var document in documents)
+                {
+                    document.DocumentStatus = model.DocumentStatus;
+                    if (document.Remarks.Length < 1)
+                    {
+                        document.Remarks = "Pending";
+                    }
+                    document.Remarks = model.Remarks;
+                    // Update any other columns if needed
+                }
+
+                // Save changes to the database
+                _db.SaveChanges();
+
+                // Return a success response
+                return RedirectToAction("Index", "Students");
+            }
+            else if (model.DocumentStatus == "Reject")
+            {
+                // Perform reject logic
+                var documents = _db.Documents.Where(doc => doc.UserId == model.UserId).ToList();
+
+                if (documents == null || !documents.Any())
+                {
+                    return NotFound("No documents found for the specified UserId.");
+                }
+
+                // Update the status and remarks for each document
+                foreach (var document in documents)
+                {
+                    document.DocumentStatus = model.DocumentStatus;
+                    if (document.Remarks == "null")
+                    {
+                        document.Remarks = "Pending";
+                    }
+                    document.Remarks = model.Remarks;
+                    // Update any other columns if needed
+                }
+
+                // Save changes to the database
+                _db.SaveChanges();
+
+                // Return a success response
+                return RedirectToAction("Index", "Students");
+            }
+
+            // Return a success response
+            return RedirectToAction("Index", "Students");
         }
 
         public IActionResult DownloadExcel()

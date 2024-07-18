@@ -1,19 +1,27 @@
 ﻿@model IEnumerable<dynamic>
 @using System.IO
 
-<div class="container text-center mt-4">
+@{
+    var userId = ViewBag.UserId;
+}
+
+<div class="container mt-4">
     <h2 class="text-center mb-4">Documents</h2>
+
+    <div class="text-end mb-4">
+        <a class="btn btn-success mx-2 text-end" asp-controller="Student" asp-action="Index">Back to List</a>
+    </div>
 
     @if (Model != null && Model.Any())
     {
         <ul class="p-0 d-flex">
             @foreach (var file in Model)
             {
-                Console.WriteLine(file);
-                <div class="card p-2" style="width: 18rem;">
+                <div class="card p-2" style="width: 20rem;">
                     <img src="@Url.Content(file.FileName)" class="card-img-top" width="200px" height="200px">
                     <div class="card-body">
                         <h5 class="card-title">@file.DocumentName</h5>
+                        <input type="hidden" id="document-id-@file.DocumentId" value="@file.DocumentId" />
                     </div>
                 </div>
             }
@@ -24,7 +32,56 @@
         <p>No documents available for this Student.</p>
     }
 
-    <div class="text-end mb-4">
-        <a class="btn btn-success mx-2 text-end" asp-controller="Student" asp-action="Index">Back to List</a>
+
+    <div class="text-end mb-4 row ">
+        <div class="container text-center col-6 my-4">
+            <input id="remarks-@userId" placeholder="Remarks..." class="form-control rounded-3 mb-3"></input>
+            <button class="btn btn-outline-success mx-2 px-4 py-1 rounded-pill text-center" onclick="approveDocument('@userId')"><i class='bx bx-check'></i>Approve</button>
+            <button class="btn btn-outline-danger mx-2 px-4 py-1 rounded-pill text-center" onclick="rejectDocument('@userId')"><i class='bx bx-x'></i>Reject</button>
+        </div>
     </div>
+
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+
+    function approveDocument(id) {
+        var remarks = document.getElementById("remarks-" + id).value;
+        var data = {
+            UserId: id,
+            DocumentStatus: "Approve",
+            Remarks: remarks
+        };
+
+        sendDocumentAction(data);
+    }
+
+    function rejectDocument(id) {
+        var remarks = document.getElementById("remarks-" + id).value;
+        var data = {
+            UserId: id,
+            DocumentStatus: "Reject",
+            Remarks: remarks
+        };
+
+        sendDocumentAction(data);
+    }
+
+    function sendDocumentAction(data) {
+        $.ajax({
+            url: '@Url.Action("ApproveOrReject", "Student")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (response) {
+                alert("Status processed successfully.");
+            },
+            error: function (error) {
+                alert("Status processed unsuccessfull.");
+                alert("Error: " + error.responseText);
+            }
+        });
+    }
+</script>
