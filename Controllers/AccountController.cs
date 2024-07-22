@@ -1,5 +1,6 @@
 ﻿using ConnectingDatabase.Data;
 using ConnectingDatabase.Models;
+using ConnectingDatabase.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConnectingDatabase.Controllers
@@ -7,12 +8,15 @@ namespace ConnectingDatabase.Controllers
     public class AccountController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IEmailService _emailService;
 
         const string SessionUserName = "_UserName";
         const string SessionUserId = "_UserId";
-        public AccountController(ApplicationDbContext db)
+
+        public AccountController(ApplicationDbContext db, IEmailService emailService)
         {
             _db = db;
+            _emailService = emailService;
         }
 
         public IActionResult Register()
@@ -21,7 +25,7 @@ namespace ConnectingDatabase.Controllers
         }
 
         [HttpPost]
-        public IActionResult Register(User users)
+        public async Task<IActionResult> Register(User users)
         {
             if (ModelState.IsValid)
             {
@@ -36,14 +40,20 @@ namespace ConnectingDatabase.Controllers
 
                 _db.Users.Add(users); // No need for .ToString()
                 _db.SaveChanges();
+                TempData["success"] = "Registered Successfully!";
 
-                TempData["success"] = "Registered Successfullly!"; 
+                // Send confirmation email
+                var subject = "Registration Successful";
+                var message = $"Hello {users},<br><br>Thank you for registering with us. Your account has been created successfully.<br><br>Best regards,<br>Your Company";
+                await _emailService.SendEmailAsync(users.Email, subject, message);
+
                 return RedirectToAction("Login");
             }
 
             ViewBag.ErrorMessage = "Something went wrong, Try Again!";
             return View();
-        }
+            }
+
         public IActionResult Login()
         {
             return View();
