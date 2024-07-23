@@ -29,25 +29,32 @@ namespace ConnectingDatabase.Controllers
         {
             if (ModelState.IsValid)
             {
-                var existingUser = _db.Users.FirstOrDefault(e => e.Email == users.Email);
-
-                if (existingUser != null)
+                if (users.Password != users.ConfirmPassword)
                 {
-                    // Email already exists
-                    TempData["error"] = "Email Address already exists!";
+                    ViewBag.ErrorMessage = "Password does not matches, Try Again!";
+                }
+                else
+                {
+                    var existingUser = _db.Users.FirstOrDefault(e => e.Email == users.Email);
+
+                    if (existingUser != null)
+                    {
+                        // Email already exists
+                        TempData["error"] = "Email Address already exists!";
+                        return RedirectToAction("Login");
+                    }
+
+                    _db.Users.Add(users); // No need for .ToString()
+                    _db.SaveChanges();
+                    TempData["success"] = "Registered Successfully!";
+
+                    // Send confirmation email
+                    var subject = "Registration Successful";
+                    var message = $"Hello {users.Name},<br><br>Thank you for registering with us. Your account has been created successfully.<br><br>Best regards,<br>Student Hub";
+                    await _emailService.SendEmailAsync(users.Email, subject, message);
+
                     return RedirectToAction("Login");
                 }
-
-                _db.Users.Add(users); // No need for .ToString()
-                _db.SaveChanges();
-                TempData["success"] = "Registered Successfully!";
-
-                // Send confirmation email
-                var subject = "Registration Successful";
-                var message = $"Hello {users.Name},<br><br>Thank you for registering with us. Your account has been created successfully.<br><br>Best regards,<br>Student Hub";
-                await _emailService.SendEmailAsync(users.Email, subject, message);
-
-                return RedirectToAction("Login");
             }
 
             ViewBag.ErrorMessage = "Something went wrong, Try Again!";

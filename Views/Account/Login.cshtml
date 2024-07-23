@@ -1,6 +1,40 @@
 ﻿@model User;
 
-<div class="card mx-auto d-block mt-5" style="width: 50vw;">
+<section class="vh-100">
+    <div class="container py-5 h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                <div class="card shadow-2-strong" style="border-radius: 1rem;">
+                    <div class="card-body text-center">
+                        <form method="post" class="container my-2">
+                            <div class="p-3">
+                                <div class="row pb-2">
+                                    <h3 class="mb-4">Sign In</h3>
+                                    <div class="col-12 mb-3">
+                                        <input asp-for="Email" class="form-control" placeholder="Email" />
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <input asp-for="Password" class="form-control" placeholder="Password" />
+                                        <span asp-validation-for="Password" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="text-center pb-1 my-2">
+                                    <button type="submit" class="btn btn-primary text-center px-4">Submit</button>
+                                </div>
+                                <div class="container text-center mt-3">
+                                    <span>Don't have a Account?</span> <a asp-controller="Account" asp-action="Register" class="text-decoration-none">Register</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* <div class="card mx-auto d-block mt-5" style="width: 50vw;">
     <div class="card-body">
         <form method="post" class="container my-4">
             <div class="p-3 mt-5">
@@ -27,7 +61,7 @@
             </div>
         </form>
     </div>
-</div>
+</div> *@
 
 @section Scripts {
     @{

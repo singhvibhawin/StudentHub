@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ConnectingDatabase.Models
 {
@@ -16,6 +17,13 @@ namespace ConnectingDatabase.Models
         [MaxLength(30)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
+
+        [Required]
+        [MinLength(8)]
+        [MaxLength(30)]
+        [DataType(DataType.Password)]
+        [NotMapped]
+        public string ConfirmPassword { get; set; }
 
         [Required]
         [MaxLength(30)]

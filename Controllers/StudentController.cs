@@ -13,13 +13,15 @@ namespace ConnectingDatabase.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IEmailService _emailService;
+        private readonly ILogger<StudentController> _logger;
 
         const string SessionUserName = "_UserName";
         const string SessionUserId = "_UserId";
-        public StudentController(ApplicationDbContext db, IEmailService emailService)
+        public StudentController(ApplicationDbContext db, IEmailService emailService, ILogger<StudentController> logger)
         {
             _db = db;
             _emailService = emailService;
+            _logger = logger;
         }
         public IActionResult Index()
         {
@@ -435,6 +437,87 @@ namespace ConnectingDatabase.Controllers
             return RedirectToAction("Index", "Students");
         }
 
+        public IActionResult UploadExcel()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadExcel(IFormFile file)
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            if (file == null || file.Length == 0)
+            {
+                _logger.LogError("No file uploaded.");
+                return BadRequest("No file uploaded.");
+            }
+
+            var students = new List<Student>();
+
+            using (var stream = new MemoryStream())
+            {
+                await file.CopyToAsync(stream);
+
+                using (var package = new ExcelPackage(stream))
+                {
+                    var worksheet = package.Workbook.Worksheets[0];
+                    var rowCount = worksheet.Dimension.Rows;
+
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+                        var name = worksheet.Cells[row, 1].Value?.ToString().Trim();
+                        var email = worksheet.Cells[row, 2].Value?.ToString().Trim();
+                        var contact = worksheet.Cells[row, 3].Value?.ToString().Trim();
+                        var address = worksheet.Cells[row, 4].Value?.ToString().Trim();
+                        var city = worksheet.Cells[row, 5].Value?.ToString().Trim();
+                        var pincode = worksheet.Cells[row, 6].Value?.ToString().Trim();
+                        var userIdValue = "1";
+
+                        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) ||
+                            string.IsNullOrWhiteSpace(contact) || string.IsNullOrWhiteSpace(address) ||
+                            string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(pincode) ||
+                            string.IsNullOrWhiteSpace(userIdValue))
+                        {
+                            _logger.LogError($"Invalid data at row {row}. One or more fields are null or empty.");
+                            continue;
+                        }
+
+                        if (!int.TryParse(userIdValue, out int userId))
+                        {
+                            _logger.LogError($"Invalid UserId at row {row}. UserId should be an integer.");
+                            continue;
+                        }
+
+                        var student = new Student
+                        {
+                            Name = name,
+                            Email = email,
+                            Contact = contact,
+                            Address = address,
+                            City = city,
+                            Pincode = pincode,
+                            UserId = userId
+                        };
+                        students.Add(student);
+                    }
+                }
+            }
+
+            if (students.Count > 0)
+            {
+                _db.Students.AddRange(students);
+                await _db.SaveChangesAsync();
+            }
+            else
+            {
+                _logger.LogError("No valid students data found in the uploaded file.");
+                return BadRequest("No valid students data found in the uploaded file.");
+            }
+
+            ViewBag.Message = "File uploaded successfully.";
+            return RedirectToAction("Index");
+        }
 
         public IActionResult DownloadExcel()
         {

@@ -6,7 +6,7 @@
       
 @if (username == "user")
 {
-    <div class="card mx-auto d-block mt-4" style="width: 50vw;">
+    <div class="card mx-auto d-block mt-4" style="width: 50vw; border-radius: 1rem;">
         <div class="card-body">
             <form method="post" class="container my-4" enctype="multipart/form-data">
                 <div class="p-3 mt-3" style="max-height: 600px; overflow-y: auto;">
@@ -72,83 +72,89 @@
 }
 else
 {
-    <h2 class="text-primary text-center mb-3">Students Profile</h2>
-    <table id="studentsTable" class="table table-hover table-bordered display">
-        <thead>
-            <tr class="text-center">
-                <th scope="col">Name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Contact</th>
-                <th scope="col">Address</th>
-                <th scope="col">City</th>
-                <th scope="col">Pincode</th>
-                <th scope="col">Documents</th>
-                <th scope="col">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model.students != null)
-            {
-                @foreach (var obj in Model.students)
-                {
-                    <tr class="text-center" data-id="@obj.StudentId">
-                        <td class="editable" data-field="Name">@obj.Name</td>
-                        <td class="editable" data-field="Email">@obj.Email</td>
-                        <td class="editable" data-field="Contact">@obj.Contact</td>
-                        <td class="editable" data-field="Address">@obj.Address</td>
-                        <td class="editable" data-field="City">@obj.City</td>
-                        <td class="editable" data-field="Pincode">@obj.Pincode</td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a class="btn btn-success mx-2" asp-controller="Student" asp-action="Documents" asp-route-id="@obj.UserId">Documents</a>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-warning mx-2 edit-button">Edit</button>
-                                <button class="btn btn-success mx-2 save-button" style="display:none;">Update</button>
-                                <button type="submit" class="btn btn-danger mx-2 delete-button">Delete</button>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            }
-            else
-            {
-                <h4 class="text-danger text-center">No students found.</h4>
-            }
-        </tbody>
-    </table>
-
-    <div>
-        Page @(ViewBag.CurrentPage) of @(ViewBag.TotalPages)
+    <div class="d-flex justify-content-between align-items-center p-3">
+        <h2 class="text-primary text-center">Students Profiles</h2>
+        <a class="btn btn-outline-primary" asp-controller="Student" asp-action="UploadExcel">Upload Excel</a>
     </div>
-    <nav aria-label="Page navigation">
-        <ul class="pagination">
-            @if (ViewBag.CurrentPage > 1)
-            {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)">Previous</a>
-                </li>
-            }
-            @for (int i = 1; i <= ViewBag.TotalPages; i++)
-            {
-                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
-                </li>
-            }
-            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
-            {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)">Next</a>
-                </li>
-            }
-        </ul>
-    </nav>
 
-    <div class="text-end mb-3">
-        <button id="downloadExcel" class="btn btn-outline-success mx-2">Download Excel</button>
-        <button id="downloadPdf" class="btn btn-outline-success mx-2">Download PDF</button>
+    <div class="conatiner">
+        <table id="studentsTable" class="table table-hover table-bordered display">
+            <thead>
+                <tr class="text-center">
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Contact</th>
+                    <th scope="col">Address</th>
+                    <th scope="col">City</th>
+                    <th scope="col">Pincode</th>
+                    <th scope="col">Documents</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.students != null)
+                {
+                    @foreach (var obj in Model.students)
+                    {
+                        <tr class="text-center" data-id="@obj.StudentId">
+                            <td class="editable" data-field="Name">@obj.Name</td>
+                            <td class="editable" data-field="Email">@obj.Email</td>
+                            <td class="editable" data-field="Contact">@obj.Contact</td>
+                            <td class="editable" data-field="Address">@obj.Address</td>
+                            <td class="editable" data-field="City">@obj.City</td>
+                            <td class="editable" data-field="Pincode">@obj.Pincode</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a class="btn btn-success mx-2" asp-controller="Student" asp-action="Documents" asp-route-id="@obj.UserId">Documents</a>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-warning mx-2 edit-button">Edit</button>
+                                    <button class="btn btn-success mx-2 save-button" style="display:none;">Update</button>
+                                    <button type="submit" class="btn btn-danger mx-2 delete-button">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <h4 class="text-danger text-center">No students found.</h4>
+                }
+            </tbody>
+        </table>
+
+        <div>
+            Page @(ViewBag.CurrentPage) of @(ViewBag.TotalPages)
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                @if (ViewBag.CurrentPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)">Previous</a>
+                    </li>
+                }
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                    </li>
+                }
+                @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)">Next</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+
+        <div class="text-end mb-3">
+            <button id="downloadExcel" class="btn btn-outline-success mx-2">Download Excel</button>
+            <button id="downloadPdf" class="btn btn-outline-success mx-2">Download PDF</button>
+        </div>
     </div>
 }
 
