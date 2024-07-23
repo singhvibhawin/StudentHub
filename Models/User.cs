@@ -17,10 +17,8 @@ namespace ConnectingDatabase.Models
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
-        //[Required]
-        //[MaxLength(30)]
-        //public string Name { get; set; }
-        //public DateTime CreatedAt { get; set; }
-        //public DateTime? DeletedAt { get; set; }
+        [Required]
+        [MaxLength(30)]
+        public string Name { get; set; }
     }
 }

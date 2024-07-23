@@ -44,7 +44,7 @@ namespace ConnectingDatabase.Controllers
 
                 // Send confirmation email
                 var subject = "Registration Successful";
-                var message = $"Hello {users},<br><br>Thank you for registering with us. Your account has been created successfully.<br><br>Best regards,<br>Your Company";
+                var message = $"Hello {users.Name},<br><br>Thank you for registering with us. Your account has been created successfully.<br><br>Best regards,<br>Student Hub";
                 await _emailService.SendEmailAsync(users.Email, subject, message);
 
                 return RedirectToAction("Login");

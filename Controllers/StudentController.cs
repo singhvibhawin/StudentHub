@@ -5,19 +5,22 @@ using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
 using iTextSharp.text.pdf;
 using Microsoft.CodeAnalysis;
+using ConnectingDatabase.Services;
 
 namespace ConnectingDatabase.Controllers
 {
     public class StudentController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IEmailService _emailService;
+
         const string SessionUserName = "_UserName";
         const string SessionUserId = "_UserId";
-        public StudentController(ApplicationDbContext db)
+        public StudentController(ApplicationDbContext db, IEmailService emailService)
         {
             _db = db;
+            _emailService = emailService;
         }
-
         public IActionResult Index()
         {
             string username = HttpContext.Session.GetString("_UserName");
@@ -354,11 +357,18 @@ namespace ConnectingDatabase.Controllers
         }
 
         [HttpPost]
-        public IActionResult ApproveOrReject([FromBody] Documents model)
+        public async Task<IActionResult> ApproveOrReject([FromBody] Documents model)
         {
             if (model == null)
             {
                 return BadRequest("Invalid data.");
+            }
+
+            // Retrieve the user from the database
+            var user = _db.Users.FirstOrDefault(u => u.UserId == model.UserId);
+            if (user == null)
+            {
+                return NotFound("User not found.");
             }
 
             // Process the action (approve or reject) based on the model data
@@ -376,16 +386,17 @@ namespace ConnectingDatabase.Controllers
                 foreach (var document in documents)
                 {
                     document.DocumentStatus = model.DocumentStatus;
-                    if (document.Remarks.Length < 1)
-                    {
-                        document.Remarks = "Pending";
-                    }
-                    document.Remarks = model.Remarks;
+                    document.Remarks = string.IsNullOrWhiteSpace(model.Remarks) ? "Pending" : model.Remarks;
                     // Update any other columns if needed
                 }
 
                 // Save changes to the database
                 _db.SaveChanges();
+
+                // Send approval email
+                var subject = "Documents Approved";
+                var message = $"Hello {user.Name},<br><br>Your documents have been approved with the following remarks: {model.Remarks}.<br><br>Best regards,<br>Student Hub";
+                await _emailService.SendEmailAsync(user.Email, subject, message);
 
                 // Return a success response
                 return RedirectToAction("Index", "Students");
@@ -404,16 +415,17 @@ namespace ConnectingDatabase.Controllers
                 foreach (var document in documents)
                 {
                     document.DocumentStatus = model.DocumentStatus;
-                    if (document.Remarks == "null")
-                    {
-                        document.Remarks = "Pending";
-                    }
-                    document.Remarks = model.Remarks;
+                    document.Remarks = string.IsNullOrWhiteSpace(model.Remarks) ? "Pending" : model.Remarks;
                     // Update any other columns if needed
                 }
 
                 // Save changes to the database
                 _db.SaveChanges();
+
+                // Send rejection email
+                var subject = "Documents Rejected";
+                var message = $"Hello {user.Name},<br><br>Your documents have been rejected with the following remarks: {model.Remarks}.<br><br>Best regards,<br>Student Hub";
+                await _emailService.SendEmailAsync(user.Email, subject, message);
 
                 // Return a success response
                 return RedirectToAction("Index", "Students");
@@ -422,6 +434,7 @@ namespace ConnectingDatabase.Controllers
             // Return a success response
             return RedirectToAction("Index", "Students");
         }
+
 
         public IActionResult DownloadExcel()
         {
