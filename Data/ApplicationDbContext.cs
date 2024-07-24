@@ -12,12 +12,5 @@ namespace ConnectingDatabase.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Documents> Documents { get; set; }
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Documents>()
-                .HasKey(d => d.DocumentId); // Ensure the primary key is set
-
-            base.OnModelCreating(modelBuilder);
-        }
     }
 }

@@ -14,14 +14,15 @@ namespace ConnectingDatabase.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IEmailService _emailService;
         private readonly ILogger<StudentController> _logger;
+        private readonly CustomLoggerService _customLogger;
 
         const string SessionUserName = "_UserName";
         const string SessionUserId = "_UserId";
-        public StudentController(ApplicationDbContext db, IEmailService emailService, ILogger<StudentController> logger)
+        public StudentController(ApplicationDbContext db, IEmailService emailService, ILogger<StudentController> logger, CustomLoggerService customLogger)
         {
             _db = db;
             _emailService = emailService;
-            _logger = logger;
+            _customLogger = customLogger;
         }
         public IActionResult Index()
         {
@@ -34,6 +35,7 @@ namespace ConnectingDatabase.Controllers
                 return View(studentsObj);
             }
 
+            // _customLogger.LogAsync($"Access denied for user: {username}").Wait();
             return NotFound();
         }
 
@@ -45,8 +47,8 @@ namespace ConnectingDatabase.Controllers
 
             if (username == null)
             {
+                // await _customLogger.LogAsync("Access denied. User is not logged in.");
                 TempData["error"] = "Access denied. Please log in to continue.";
-                Console.WriteLine("Access denied. Please log in to continue.");
                 return RedirectToAction("Login","Account");
             }
 
@@ -57,8 +59,8 @@ namespace ConnectingDatabase.Controllers
 
                 if (existingStudent != null)
                 {
+                    // await _customLogger.LogAsync("A student profile associated with this user already exists.");
                     TempData["error"] = "A student profile associated with this user already exists.";
-                    Console.WriteLine("A student profile associated with this user already exists.");
                     return RedirectToAction("UserProfile");
                 }
             }
@@ -77,17 +79,6 @@ namespace ConnectingDatabase.Controllers
                                 .Skip((page - 1) * pageSize)
                                 .Take(pageSize)
                                 .ToListAsync();
-
-            //var studentsObj = await _db.Students.OrderBy(s => s.StudentId)
-            //                        .Skip((page - 1) * pageSize)
-            //                        .Take(pageSize)
-            //                        .Select(s => new
-            //                        {
-            //                            StudentId = s.StudentId,
-            //                            FilePaths = s.FilePaths ?? string.Empty, // Handle null values
-            //                            // Include other properties with null handling
-            //                        })
-            //                        .ToListAsync();
             
             var viewModel = new StudentModel
             {
@@ -118,6 +109,7 @@ namespace ConnectingDatabase.Controllers
 
                 if (existingStudent != null)
                 {
+                    // await _customLogger.LogAsync($"Email already exists for email: {student.Email}");
                     TempData["error"] = "Email already exists!";
                     return View();
                 }
@@ -127,6 +119,7 @@ namespace ConnectingDatabase.Controllers
 
                 if (userId == null)
                 {
+                    // await _customLogger.LogAsync("User session has expired. Please log in again.");
                     TempData["error"] = "User session has expired. Please log in again.";
                     return RedirectToAction("Login", "Account");
                 }
@@ -137,6 +130,7 @@ namespace ConnectingDatabase.Controllers
                 _db.Students.Add(student);
                 _db.SaveChanges();
 
+                // await _customLogger.LogAsync($"Student registered successfully with Email: {student.Email}");
                 TempData["success"] = "Student registered successfully!";
                 return RedirectToAction("UserProfile");
             }
@@ -162,6 +156,7 @@ namespace ConnectingDatabase.Controllers
 
                 if (userId == null)
                 {
+                    // await _customLogger.LogAsync("Session expired while uploading document.");
                     TempData["error"] = "Session expired! Try Again!";
                     return Json(new { success = false, message = TempData["error"] });
                 }
@@ -174,6 +169,7 @@ namespace ConnectingDatabase.Controllers
                 // Check if a file with the same name already exists
                 if (System.IO.File.Exists(filePath))
                 {
+                    // await _customLogger.LogAsync($"File already exists with name: {fileName}");
                     return Json(new { success = false, message = "A file with the same name already exists." });
                 }
 
@@ -189,20 +185,24 @@ namespace ConnectingDatabase.Controllers
                 _db.Documents.Add(docs);
                 _db.SaveChanges();
                 
+                // await _customLogger.LogAsync($"Document uploaded successfully with name: {fileName}");
                 TempData["success"] = "Document uploaded successfully!";
 
                 return Json(new { success = true, filePath });
             }
+
+            // await _customLogger.LogAsync("No file uploaded during document upload.");
             return Json(new { success = false });
         }
 
         [HttpPost]
-        public IActionResult DeleteDocument([FromBody] DeleteDocumentRequest request)
+        public async Task<IActionResult> DeleteDocument([FromBody] DeleteDocumentRequest request)
         {
             int? userId = HttpContext.Session.GetInt32("_UserId");
 
             if (userId == null)
             {
+                // await _customLogger.LogAsync("User is not logged in while trying to delete document.");
                 return Json(new { success = false, message = "User is not logged in." });
             }
 
@@ -218,6 +218,7 @@ namespace ConnectingDatabase.Controllers
 
             if (docs == null)
             {
+                // await _customLogger.LogAsync("Document not found during delete attempt.");
                 return Json(new { success = false, message = "Document not found." });
             }
 
@@ -229,8 +230,11 @@ namespace ConnectingDatabase.Controllers
             if (System.IO.File.Exists(filePath))
             {
                 System.IO.File.Delete(filePath);
+                // await _customLogger.LogAsync($"Document deleted successfully with path: {filePath}");
                 return Json(new { success = true });
             }
+
+            // await _customLogger.LogAsync($"Document file not found for deletion with path: {filePath}");
             return Json(new { success = false });
         }
 
@@ -243,6 +247,7 @@ namespace ConnectingDatabase.Controllers
     
             if (userId == null)
             {
+                // _customLogger.LogAsync("User session has expired while accessing user profile.").Wait();
                 TempData["error"] = "User session has expired. Please log in again.";
                 return RedirectToAction("Login", "Account");
             }
@@ -256,6 +261,7 @@ namespace ConnectingDatabase.Controllers
             // If no matching student is found, handle accordingly
             if (studentObj == null)
             {
+                // _customLogger.LogAsync("No student record found for the current user in profile access.").Wait();
                 TempData["error"] = "No student record found for the current user.";
                 return RedirectToAction("Index", "Student");
             }
@@ -264,7 +270,7 @@ namespace ConnectingDatabase.Controllers
         }
 
         [HttpPost]
-        public IActionResult Edit([FromBody]  Student updatedStudent)
+        public async Task<IActionResult> Edit([FromBody]  Student updatedStudent)
         {
             if (updatedStudent != null)
             {
@@ -275,6 +281,7 @@ namespace ConnectingDatabase.Controllers
                     var student = _db.Students.FirstOrDefault(uid => uid.StudentId == updatedStudent.StudentId);
                     if (student == null)
                     {
+                        // await _customLogger.LogAsync($"No student record found with ID: {updatedStudent.StudentId}");
                         return NotFound();
                     }
 
@@ -288,6 +295,8 @@ namespace ConnectingDatabase.Controllers
 
                     _db.Students.Update(student);
                     _db.SaveChanges();
+
+                    // await _customLogger.LogAsync($"Student record updated successfully with ID: {updatedStudent.StudentId}");
                     TempData["success"] = "Student updated successfully!";
                     return RedirectToAction("Index");
                 }
@@ -295,6 +304,7 @@ namespace ConnectingDatabase.Controllers
                 var existingStudent = _db.Students.FirstOrDefault(uid => uid.UserId == updatedStudent.UserId);
                 if (existingStudent == null)
                 {
+                    // await _customLogger.LogAsync($"No student record found with ID: {updatedStudent.StudentId}");
                     return NotFound();
                 }
 
@@ -308,25 +318,31 @@ namespace ConnectingDatabase.Controllers
 
                 _db.Students.Update(existingStudent);
                 _db.SaveChanges();
+
+                // await _customLogger.LogAsync($"Student record updated successfully with ID: {updatedStudent.StudentId}");
                 TempData["success"] = "Student updated successfully!";
                 return RedirectToAction("Index");
             }
             else
             {
+                // await _customLogger.LogAsync("No student data provided for editing.");
                 return NotFound();
             }
         }
 
         [HttpDelete]
-        public IActionResult DeleteStudent(int id)
+        public async Task<IActionResult> DeleteStudent(int id)
         {
             var student = _db.Students.FirstOrDefault(s => s.StudentId == id);
             if (student == null)
             {
+                // await _customLogger.LogAsync($"Student with ID {id} not found for deletion.");
                 return NotFound();
             }
             _db.Students.Remove(student);
             _db.SaveChanges();
+
+            // await _customLogger.LogAsync($"Student with ID {id} successfully deleted.");
             return RedirectToAction("Index");
         }
 
@@ -363,6 +379,7 @@ namespace ConnectingDatabase.Controllers
         {
             if (model == null)
             {
+                // await _customLogger.LogAsync("Invalid data provided for document approval or rejection.");
                 return BadRequest("Invalid data.");
             }
 
@@ -370,6 +387,7 @@ namespace ConnectingDatabase.Controllers
             var user = _db.Users.FirstOrDefault(u => u.UserId == model.UserId);
             if (user == null)
             {
+                // await _customLogger.LogAsync($"User with ID {model.UserId} not found for document approval or rejection.");
                 return NotFound("User not found.");
             }
 
@@ -381,6 +399,7 @@ namespace ConnectingDatabase.Controllers
 
                 if (documents == null || !documents.Any())
                 {
+                    // await _customLogger.LogAsync($"No documents found for user ID {model.UserId}.");
                     return NotFound("No documents found for the specified UserId.");
                 }
 
@@ -410,6 +429,7 @@ namespace ConnectingDatabase.Controllers
 
                 if (documents == null || !documents.Any())
                 {
+                    // await _customLogger.LogAsync($"No documents found for user ID {model.UserId}.");
                     return NotFound("No documents found for the specified UserId.");
                 }
 
@@ -450,6 +470,7 @@ namespace ConnectingDatabase.Controllers
             if (file == null || file.Length == 0)
             {
                 _logger.LogError("No file uploaded.");
+                // await _customLogger.LogAsync("No file uploaded during Excel file upload.");
                 return BadRequest("No file uploaded.");
             }
 
@@ -479,12 +500,14 @@ namespace ConnectingDatabase.Controllers
                             string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(pincode) ||
                             string.IsNullOrWhiteSpace(userIdValue))
                         {
+                            // await _customLogger.LogAsync($"Invalid data at row {row}. One or more fields are null or empty.");
                             _logger.LogError($"Invalid data at row {row}. One or more fields are null or empty.");
                             continue;
                         }
 
                         if (!int.TryParse(userIdValue, out int userId))
                         {
+                            // await _customLogger.LogAsync($"Invalid UserId at row {row}. UserId should be an integer.");
                             _logger.LogError($"Invalid UserId at row {row}. UserId should be an integer.");
                             continue;
                         }
@@ -508,9 +531,11 @@ namespace ConnectingDatabase.Controllers
             {
                 _db.Students.AddRange(students);
                 await _db.SaveChangesAsync();
+                // await _customLogger.LogAsync("Excel file processed successfully. Students added to database.");
             }
             else
             {
+                // await _customLogger.LogAsync("No valid students data found in the uploaded file.");
                 _logger.LogError("No valid students data found in the uploaded file.");
                 return BadRequest("No valid students data found in the uploaded file.");
             }
@@ -519,7 +544,7 @@ namespace ConnectingDatabase.Controllers
             return RedirectToAction("Index");
         }
 
-        public IActionResult DownloadExcel()
+        public async Task<IActionResult> DownloadExcel()
         {
             List<Student> students = _db.Students.ToList();
 
@@ -553,11 +578,12 @@ namespace ConnectingDatabase.Controllers
                 var stream = new MemoryStream(package.GetAsByteArray());
                 var content = stream.ToArray();
                 TempData["success"] = "Download successfull!";
+                // await _customLogger.LogAsync("Students data exported to Excel successfully.");
                 return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Students.xlsx");
             }
         }
 
-        public IActionResult DownloadPdf()
+        public async Task<IActionResult> DownloadPdf()
         {
             List<Student> students = _db.Students.ToList();
             using (var stream = new MemoryStream())
@@ -589,6 +615,7 @@ namespace ConnectingDatabase.Controllers
 
                 var content = stream.ToArray();
                 TempData["success"] = "Download successfull!";
+                // await _customLogger.LogAsync("Students data exported to PDF successfully.");
                 return File(content, "application/pdf", "Students.pdf");
             }
         }

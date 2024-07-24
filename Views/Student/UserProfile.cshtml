@@ -52,14 +52,17 @@
     </div>
 </div>
 
-<div class="card mx-auto mt-2" style="width: 50vw;">
-    <div class="container p-3">
-        <div class="card-body">
-            <h5 class="card-title">Document Status - @docs.DocumentStatus</h5>
-            <p>Document Remark - @docs.Remarks</p>
+@if (@docs != null) 
+{
+    <div class="card mx-auto mt-2" style="width: 50vw;">
+        <div class="container p-3">
+            <div class="card-body">
+                <h5 class="card-title">Document Status - @docs.DocumentStatus</h5>
+                <p>Document Remark - @docs.Remarks</p>
+            </div>
         </div>
     </div>
-</div>
+}
 
 <script>
 
