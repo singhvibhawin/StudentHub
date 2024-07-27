@@ -34,6 +34,7 @@ namespace ConnectingDatabase.Models
         public string Pincode { get; set; }
 
         public int UserId { get; set; }
+        public int DegreeId { get; set; }
     }
 }
 

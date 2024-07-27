@@ -4,6 +4,10 @@
 }
 
 @{
+    var Degree = ViewBag.Degree;
+}
+
+@{
     var Username = ViewBag.Username;
 }
 
@@ -41,6 +45,10 @@
                     <div class="col-6 mb-3">
                         <label class="p-0">Pincode</label>
                         <input id="pincode" class="form-control" value="@data.Pincode" disabled />
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="p-0">Degree</label>
+                        <input class="form-control" value="@Degree.DegreeName" disabled /> @* id="degree" *@
                     </div>
                 </div>
                 <div class="pb-1 my-2">

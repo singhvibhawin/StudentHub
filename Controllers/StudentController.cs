@@ -28,11 +28,20 @@ namespace ConnectingDatabase.Controllers
         {
             string username = HttpContext.Session.GetString("_UserName");
 
+            var viewModel = new StudentModel();
+
             if (username == "admin")
             {
                 List<Student> studentsObj = _db.Students.ToList();
                 ViewBag.Username = username;
                 return View(studentsObj);
+            }
+
+            if (username == "user")
+            {
+                viewModel.Degrees = _db.tbl_degree_master.ToList();
+                ViewBag.Username = username;
+                return View(viewModel);
             }
 
             // _customLogger.LogAsync($"Access denied for user: {username}").Wait();
@@ -56,7 +65,7 @@ namespace ConnectingDatabase.Controllers
             {
                 int? userId = HttpContext.Session.GetInt32("_UserId");
                 var existingStudent = _db.Students.FirstOrDefault(uid => uid.UserId == userId);
-
+                
                 if (existingStudent != null)
                 {
                     // await _customLogger.LogAsync("A student profile associated with this user already exists.");
@@ -79,12 +88,14 @@ namespace ConnectingDatabase.Controllers
                                 .Skip((page - 1) * pageSize)
                                 .Take(pageSize)
                                 .ToListAsync();
-            
+
             var viewModel = new StudentModel
             {
                 students = studentsObj,
-                student = new Student()
+                student = new Student(),
+                Degrees = _db.tbl_degree_master.ToList()
             };
+
 
             ViewBag.TotalPages = totalPages;
             ViewBag.CurrentPage = page;
@@ -254,6 +265,9 @@ namespace ConnectingDatabase.Controllers
 
             var studentObj = _db.Students.FirstOrDefault(e => e.UserId == userId.Value);
             ViewBag.Data = studentObj;
+            
+            var degreeObj = _db.tbl_degree_master.FirstOrDefault(e => e.Id == studentObj.DegreeId);
+            ViewBag.Degree = degreeObj;
 
             var docsObj = _db.Documents.FirstOrDefault(e => e.UserId == userId.Value);
             ViewBag.Docs = docsObj;

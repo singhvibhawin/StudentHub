@@ -1,0 +1,163 @@
+﻿@model List<ApprovedDataViewModel>
+
+@{
+    ViewBag.Title = "Approved Students";
+}
+
+<style>
+    .custom-scroll {
+        max-height: 250px; /* Adjust height to fit 10 items comfortably */
+        overflow-y: auto;
+    }
+</style>
+
+<div class="conatiner">
+    <h2 class="text-primary text-center my-3">Approved Students</h2>
+    <table id="studentsTable" class="table table-hover table-bordered display">
+        <thead>
+            <tr class="text-center">
+                <th scope="col">User Id</th>
+                <th scope="col">Student Name</th>
+                <th scope="col">Degree Name</th>
+                <th scope="col">Subjects</th>
+                <th scope="col">Semster</th>
+                <th scope="col">Year</th>
+                <th scope="col">Submit</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null )
+            {
+                @foreach (var obj in Model)
+                {
+                    <tr class="text-center" data-id="@obj.StudentId">
+                        <td class="editable" data-field="User Id">@obj.UserId</td>
+                        <td class="editable" data-field="Name">@obj.StudentName</td>
+                        <td class="editable" data-field="Degree Name" data-degree-id="@obj.DegreeId">@obj.DegreeName</td>
+                        <td class="editable" data-field="Subjects">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle subjects-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="subjectsButton_@obj.StudentId">
+                                    Select Subject
+                                </button>
+                                <ul class="dropdown-menu p-3 custom-scroll" id="subjectsDropdown_@obj.StudentId">
+                                    @foreach (var subject in obj.Subjects)
+                                    {
+                                        <li>
+                                            <div class="form-check">
+                                                <input class="form-check-input subject-checkbox" type="checkbox" id="subject_@subject.SubjectId" data-student-id="@obj.StudentId" value="@subject.SubjectId">
+                                                <label class="form-check-label" for="subject_@subject.SubjectId">
+                                                    @subject.SubjectName
+                                                </label>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                        <td class="editable" data-field="Semester">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle semester-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="semesterButton_@obj.StudentId">
+                                    Select Semester
+                                </button>
+                                <ul class="dropdown-menu">
+                                    @foreach (var semester in obj.Semesters)
+                                    {
+                                        <li><a class="dropdown-item semester-item" href="#" data-id="@semester.SemesterId" data-student-id="@obj.StudentId">@semester.Semesters</a></li>
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                        <td class="editable" data-field="Year">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle year-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="yearButton_@obj.StudentId">
+                                    Select Year
+                                </button>
+                                <ul class="dropdown-menu">
+                                    @foreach (var year in obj.Years)
+                                    {
+                                        <li><a class="dropdown-item year-item" href="#" data-id="@year.YearId" data-student-id="@obj.StudentId">@year.Year</a></li>
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a class="btn btn-primary mx-2 submit-button" data-student-id="@obj.StudentId">Submit</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <h4 class="text-danger text-center">No students found.</h4>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Subject dropdown selection
+        $('.subject-checkbox').change(function () {
+            const studentId = $(this).data('student-id');
+            const selectedSubjectIds = $(`#subjectsDropdown_${studentId} .subject-checkbox:checked`).map(function () {
+                return this.value;
+            }).get().join(', ');
+            $(`#subjectsButton_${studentId}`).text(selectedSubjectIds || 'Select Subject');
+        });
+
+        // Semester dropdown selection
+        $('.semester-item').click(function (e) {
+            e.preventDefault();
+            const studentId = $(this).data('student-id');
+            const selectedSemester = $(this).text().trim();
+            $(`#semesterButton_${studentId}`).text(selectedSemester).data('semester-id', $(this).data('id'));
+        });
+
+        // Year dropdown selection
+        $('.year-item').click(function (e) {
+            e.preventDefault();
+            const studentId = $(this).data('student-id');
+            const selectedYear = $(this).text().trim();
+            $(`#yearButton_${studentId}`).text(selectedYear).data('year-id', $(this).data('id'));
+        });
+
+        // Submit button action
+        $('.submit-button').click(function () {
+            const studentId = $(this).data('student-id');
+            const userId = $(`tr[data-id='${studentId}'] td[data-field='User Id']`).text().trim();
+            const degreeId = $(`tr[data-id='${studentId}'] td[data-field='Degree Name']`).data('degree-id');
+            const subjectIds = $(`#subjectsDropdown_${studentId} .subject-checkbox:checked`).map(function () {
+                return parseInt(this.value);
+            }).get();
+            const semesterId = $(`#semesterButton_${studentId}`).data('semester-id');
+            const yearId = $(`#yearButton_${studentId}`).data('year-id');
+
+            $.ajax({
+                url: '@Url.Action("degreeEnrollment", "Result")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    userId: parseInt(userId),
+                    studentId: parseInt(studentId),
+                    degreeId: parseInt(degreeId),
+                    subjectIds: subjectIds,
+                    semesterId: parseInt(semesterId),
+                    yearId: parseInt(yearId)
+                }),
+                headers: {
+                    'X-CSRF-TOKEN': $('input[name="__RequestVerificationToken"]').val() // Include CSRF token if needed
+                },
+                success: function (response) {
+                    alert('Emrollment Successfull');
+                },
+                error: function (error) {
+                    alert('Emrollment Error, Try Again!');
+                }
+            });
+        });
+    });
+
+</script>
