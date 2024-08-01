@@ -1,0 +1,39 @@
+﻿@model UploadScoresViewModel
+
+<div class="card mx-auto d-block mt-4" style="width: 50vw; border-radius: 1rem;">
+    <div class="card-body p-0">
+        <div class="p-3 mt-3 container my-4" style="max-height: 600px; overflow-y: auto;">
+            <h3 class="text-primary text-center">Upload Students Marks</h3>
+            <hr />
+            <div class="mb-2 d-flex">
+                Student Name - <h5 class="mx-2">@Model.StudentName</h5>
+            </div>
+            <div class="mb-2 d-flex">
+                Degree Name - <h5 class="mx-2">@Model.DegreeName</h5>
+            </div>
+            <form method="post" class="container my-4">
+                <input type="hidden" name="StudentId" value="@Model.StudentId" />  @*Student Id*@
+                <input type="hidden" name="DegreeId" value="@Model.DegreeId" /> @*Degree Id*@
+                <div class="row pb-2">
+                    <div class="col-6 mb-2">Subjects</div>
+                    <div class="col-6 mb-2">Marks</div>
+                    @for (int i = 0; i < Model.Subjects.Count; i++)
+                    {
+                        <div class="col-6 mb-2">
+                            <input class="form-control" value="@Model.Subjects[i].SubjectName" disabled />
+                            <input type="hidden" name="SubjectId" value="@Model.Subjects[i].SubjectId" />
+                        </div>
+                        <div class="col-6 mb-2">
+                            <input name="Marks[@i]" type="number" class="form-control" value="" required />
+                            <span asp-validation-for="Marks[@i]" class="text-danger"></span>
+                        </div>
+                    }
+                </div>
+
+                <div class="text-center pb-1 my-2">
+                    <button id="submitBtn" type="submit" class="btn btn-primary text-center px-4">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

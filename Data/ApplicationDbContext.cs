@@ -15,5 +15,6 @@ namespace ConnectingDatabase.Data
         public DbSet<SubjectMaster> tbl_subject_master { get; set; }
         public DbSet<YearMaster> tbl_year_master { get; set; }
         public DbSet<StudentDegreeEnrollment> tbl_student_degree_enrollment { get; set; }
+        public DbSet<Score> Marks { get; set; }
     }
 }

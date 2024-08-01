@@ -22,7 +22,7 @@
                 <th scope="col">Subjects</th>
                 <th scope="col">Semster</th>
                 <th scope="col">Year</th>
-                <th scope="col">Submit</th>
+                <th scope="col">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -82,7 +82,8 @@
                         </td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a class="btn btn-primary mx-2 submit-button" data-student-id="@obj.StudentId">Submit</a>
+                                <button class="btn btn-success mx-1 submit-button" data-student-id="@obj.StudentId">Submit</button>
+                                <a class="btn btn-warning mx-1" asp-controller="Result" asp-action="UploadScores" asp-route-id="@obj.StudentId">Scores</a>
                             </div>
                         </td>
                     </tr>

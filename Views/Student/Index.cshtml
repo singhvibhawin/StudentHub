@@ -1,5 +1,12 @@
 ﻿@model ConnectingDatabase.Models.StudentModel
 
+<style>
+    .custom-scroll {
+        max-height: 250px; /* Adjust height to fit 10 items comfortably */
+        overflow-y: auto;
+    }
+</style>
+
 @{
     var username = ViewBag.Username;
 }
@@ -48,7 +55,7 @@
                             <button id="degreeButton" class="btn btn-outline-primary dropdown-toggle form-control" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Select your Degree
                             </button>
-                            <ul class="dropdown-menu" id="documentTypeDegree">
+                            <ul class="dropdown-menu custom-scroll" id="documentTypeDegree">
                                 @foreach (var degree in Model.Degrees)
                                 {
                                     <li><a class="dropdown-item" data-doc-type="@degree.Id">@degree.DegreeName</a></li>
@@ -320,24 +327,24 @@ else
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.nextElementSibling.innerHTML = `
-                        <p class="text-success mx-4">File Uploaded Successfully! File: ${input.files[0].name}</p>
-                        <button type="button" class="btn btn-danger mt-2" onclick="deleteDocument('${docType}', '${data.filePath}')">X</button>
-                    `;
-                    input.style.display = "none";
-                    button.style.display = "none";
-                } else {
-                    button.nextElementSibling.innerText = "Upload Failed! Can't upload file with the same name.";
-                }
-            })
-            .catch(error => {
-                button.nextElementSibling.innerText = "Upload Error!";
-                console.error('hi');
-                console.error(error);
-            });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.nextElementSibling.innerHTML = `
+                    <p class="text-success mx-4">File Uploaded Successfully! File: ${input.files[0].name}</p>
+                    <button type="button" class="btn btn-danger mt-2" onclick="deleteDocument('${docType}', '${data.filePath}')">X</button>
+                `;
+                input.style.display = "none";
+                button.style.display = "none";
+            } else {
+                button.nextElementSibling.innerText = "Upload Failed! Can't upload file with the same name.";
+            }
+        })
+        .catch(error => {
+            button.nextElementSibling.innerText = "Upload Error!";
+            console.error('hi');
+            console.error(error);
+        });
     }
 
     function deleteDocument(docType, filePath) {

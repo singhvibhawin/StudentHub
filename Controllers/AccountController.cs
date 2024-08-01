@@ -36,7 +36,7 @@ namespace ConnectingDatabase.Controllers
                 if (users.Password != users.ConfirmPassword)
                 {
                     await _customLogger.LogAsync($"Registration failed: Passwords do not match for email {users.Email}");
-                    ViewBag.ErrorMessage = "Password does not match, Try Again!";
+                    ViewBag.ErrorMessage = "Passwords do not match. Please try again.";
                 }
                 else
                 {
@@ -45,25 +45,33 @@ namespace ConnectingDatabase.Controllers
                     if (existingUser != null)
                     {
                         await _customLogger.LogAsync($"Registration failed: Email address already exists for email {users.Email}");
-                        TempData["error"] = "Email Address already exists!";
+                        TempData["error"] = "Email address already exists!";
                         return RedirectToAction("Login");
                     }
 
-                    _db.Users.Add(users);
-                    _db.SaveChanges();
-                    await _customLogger.LogAsync($"User registered successfully: {users.Name} with email {users.Email}");
-                    TempData["success"] = "Registered Successfully!";
+                    try
+                    {
+                        _db.Users.Add(users);
+                        await _db.SaveChangesAsync();
+                        await _customLogger.LogAsync($"User registered successfully: {users.Name} with email {users.Email}");
+                        TempData["success"] = "Registered successfully!";
 
-                    var subject = "Registration Successful";
-                    var message = $"Hello {users.Name},<br><br>Thank you for registering with us. Your account has been created successfully.<br><br>Best regards,<br>Student Hub";
-                    await _emailService.SendEmailAsync(users.Email, subject, message);
+                        var subject = "Registration Successful";
+                        var message = $"Hello {users.Name},<br><br>Thank you for registering with us. Your account has been created successfully.<br><br>Best regards,<br>Student Hub";
+                        await _emailService.SendEmailAsync(users.Email, subject, message);
 
-                    return RedirectToAction("Login");
+                        return RedirectToAction("Login");
+                    }
+                    catch (Exception ex)
+                    {
+                        await _customLogger.LogAsync($"Registration failed: {ex.Message}");
+                        TempData["error"] = "An error occurred while registering. Please try again.";
+                    }
                 }
             }
 
-            await _customLogger.LogAsync($"Registration failed: ModelState is invalid for email {users.Email}");
-            ViewBag.ErrorMessage = "Something went wrong, Try Again!";
+            await _customLogger.LogAsync($"Registration failed: Try Again! {users.Email}");
+            ViewBag.ErrorMessage = "Registration failed: Try Again!";
             return View();
         }
 
@@ -77,36 +85,44 @@ namespace ConnectingDatabase.Controllers
         {
             var existingUser = _db.Users.FirstOrDefault(e => e.Email == users.Email);
 
-            if (existingUser != null)
+            if (existingUser != null && existingUser.Password == users.Password)
             {
-                if (existingUser.Username == "admin")
+                try
                 {
-                    await _customLogger.LogAsync($"Admin login successful for email {users.Email}");
-                    TempData["success"] = "Login Successfully - ADMIN!";
-                    HttpContext.Session.SetString("_UserName", existingUser.Username);
-                    HttpContext.Session.SetInt32("_UserId", existingUser.UserId);
+                    if (existingUser.Username == "admin")
+                    {
+                        await _customLogger.LogAsync($"Admin login successful for email {users.Email}");
+                        TempData["success"] = "Login successful - ADMIN!";
+                    }
+                    else
+                    {
+                        await _customLogger.LogAsync($"User login successful for email {users.Email}");
+                        TempData["success"] = "Login successful - USER!";
+                    }
+
+                    HttpContext.Session.SetString(SessionUserName, existingUser.Username);
+                    HttpContext.Session.SetInt32(SessionUserId, existingUser.UserId);
 
                     return RedirectToAction("Index", "Home");
                 }
-                else
+                catch (Exception ex)
                 {
-                    await _customLogger.LogAsync($"User login successful for email {users.Email}");
-                    TempData["success"] = "Login Successfully - USER!";
-                    HttpContext.Session.SetString("_UserName", existingUser.Username);
-                    HttpContext.Session.SetInt32("_UserId", existingUser.UserId);
-
-                    return RedirectToAction("Index", "Home");
+                    await _customLogger.LogAsync($"Login failed: An error occurred during login. Please try again.");
+                    TempData["error"] = "An error occurred during login. Please try again.";
                 }
             }
+            else
+            {
+                await _customLogger.LogAsync($"Login failed: Invalid username or password for email {users.Email}");
+                TempData["error"] = "Invalid username or password.";
+            }
 
-            await _customLogger.LogAsync($"Login failed: Invalid username or password for email {users.Email}");
-            TempData["error"] = "Invalid username or password";
             return View();
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            _customLogger.LogAsync($"User logged out at {DateTime.UtcNow}");
+            await _customLogger.LogAsync($"User logged out at {DateTime.UtcNow}");
             HttpContext.Session.Clear();
             return RedirectToAction("Login", "Account");
         }

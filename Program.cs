@@ -1,11 +1,7 @@
 using ConnectingDatabase.Data;
 using ConnectingDatabase.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System;
-using System.IO;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +29,7 @@ builder.Services.AddSession(options =>
 
 // Register Custom Logger Service
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddControllers();
 builder.Services.AddTransient<CustomLoggerService>();
 
 var app = builder.Build();
@@ -44,7 +41,6 @@ if (!Directory.Exists(logDirectory))
     Directory.CreateDirectory(logDirectory);
 }
 
-// Configure the HTTP request pipeline
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

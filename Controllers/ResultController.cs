@@ -1,6 +1,9 @@
 ﻿using ConnectingDatabase.Data;
 using ConnectingDatabase.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Org.BouncyCastle.Utilities;
+using System.Linq;
 
 namespace ConnectingDatabase.Controllers
 {
@@ -20,7 +23,6 @@ namespace ConnectingDatabase.Controllers
             var approvedStudents = _db.Students.Where(s => approvedDocs.Contains(s.UserId)).ToList();
             
             var degreeIds = approvedStudents.Select(did => did.DegreeId).ToList();
-
             var degrees = _db.tbl_degree_master.Where(d => degreeIds.Contains(d.Id)).ToList();
 
             var subjectsObj = _db.tbl_subject_master.ToList();
@@ -69,15 +71,74 @@ namespace ConnectingDatabase.Controllers
                 };
 
                 _db.tbl_student_degree_enrollment.Add(enrollment);
-                _db.SaveChanges();                
+                _db.SaveChanges();
+
+                return RedirectToAction("ApprovedStudents");
             }
             else
             {
                 return BadRequest("Error in getting values, Try Again!");
             }
+        }
+
+        public IActionResult UploadScores(int id)
+        {
+            // Fetch enrolled data for the student
+            var enrolledData = _db.tbl_student_degree_enrollment.Where(enrollment => enrollment.StudentId == id).ToList();
+
+            // Get distinct subject IDs
+            var subjectIds = enrolledData.SelectMany(e => e.SubjectId.Split(',').Select(id => int.Parse(id))).Distinct().ToList();
+
+            // Fetch subjects based on subject IDs
+            var subjects = _db.tbl_subject_master.Where(subject => subjectIds.Contains(subject.SubjectId)).ToList();
+
+            // Get distinct degree IDs
+            var degreeIds = enrolledData.Select(e => e.DegreeId).Distinct().FirstOrDefault();
+
+            // Fetch degrees based on degree IDs
+            var degrees = _db.tbl_degree_master.Where(d => d.Id == degreeIds).Select(e => e.DegreeName).FirstOrDefault();
+
+            var studentName = _db.Students.Where(i => i.StudentId == id).Select(e => e.Name).FirstOrDefault();
+
+            var scoresList = _db.Marks.Where(i => i.StudentId == id).ToList();
+
+
+            // Prepare data for the view if necessary
+            var viewModel = new UploadScoresViewModel
+            {
+                StudentId = id,
+                StudentName = studentName,
+                Subjects = subjects,
+                DegreeId = degreeIds,
+                DegreeName = degrees,
+                Scores = scoresList 
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public IActionResult UploadScores(Scores scores)
+        {
+            if (ModelState.IsValid)
+            {
+                for (int i = 0; i < scores.SubjectId.Count; i++)
+                {
+                    var score = new Score
+                    {
+                        StudentId = scores.StudentId,
+                        DegreeId = scores.DegreeId,
+                        SubjectId = scores.SubjectId[i],
+                        Marks = scores.Marks[i]
+                    };
+
+                    _db.Marks.Add(score);
+                    _db.SaveChanges();
+                }
+                return RedirectToAction("ApprovedStudents");
+            }
 
             return View();
         }
-
     }
 }

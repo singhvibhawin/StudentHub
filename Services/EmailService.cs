@@ -1,9 +1,6 @@
 ﻿using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using NuGet.Configuration;
 
 namespace ConnectingDatabase.Services
 {
